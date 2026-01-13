@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "chunk-locked:block/barrier_block_v2"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+	"required": true,
+	"package": "chunkloaded.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"advancement.PlayerAdvancementsMixin",
+		"portal.MixinServerPlayerEntity"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

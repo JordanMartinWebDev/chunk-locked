@@ -1,0 +1,11 @@
+{
+  "chunklocked.advancement.credit_awarded": "§aAdvancement Complete! §6+%s %s §7[%s]",
+  "chunklocked.credits.available": "§6Chunk Credits: %s §7(Total Advancements: %s)",
+  "chunklocked.config.reloaded": "§aChunk Locked configuration reloaded successfully!",
+  "chunklocked.error.insufficient_credits": "§cInsufficient credits! You need %s but only have %s.",
+  "chunklocked.command.credits.title": "§6=== Your Chunk Credits ===",
+  "chunklocked.command.credits.available": "§eAvailable Credits: §6%s",
+  "chunklocked.command.credits.total_advancements": "§eTotalAdvancements Completed: §7%s",
+  "chunklocked.command.info.title": "§6=== Chunk Credits for %s ===",
+  "chunklocked.command.info.player_not_found": "§cPlayer not found: %s"
+}

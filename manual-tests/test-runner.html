@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chunk Locked - Manual Test Runner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-card .label {
+            color: #6c757d;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            color: #667eea;
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            background: #e9ecef;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 0 30px 30px 30px;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .test-suites {
+            padding: 30px;
+        }
+
+        .test-suite {
+            margin-bottom: 30px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .suite-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .suite-header:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #653a8a 100%);
+        }
+
+        .suite-header h2 {
+            font-size: 1.3em;
+        }
+
+        .suite-progress {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.9em;
+        }
+
+        .suite-content {
+            display: none;
+            padding: 20px;
+            background: white;
+        }
+
+        .suite-content.expanded {
+            display: block;
+        }
+
+        .test-case {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .test-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .test-checkbox {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .test-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .test-section {
+            margin-bottom: 12px;
+        }
+
+        .test-section strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .test-section p {
+            color: #495057;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .test-case.completed {
+            opacity: 0.7;
+            background: #e7f5e7;
+        }
+
+        .test-case.completed .test-title {
+            text-decoration: line-through;
+            color: #28a745;
+        }
+
+        footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            border-top: 2px solid #e9ecef;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stat-card .value {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧪 Chunk Locked Manual Test Runner</h1>
+            <p>Track your manual testing progress</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="label">Total Tests</div>
+                <div class="value" id="totalTests">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Completed</div>
+                <div class="value" id="completedTests">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Remaining</div>
+                <div class="value" id="remainingTests">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Progress</div>
+                <div class="value" id="progressPercent">0%</div>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+        </div>
+
+        <div class="test-suites" id="testSuites"></div>
+
+        <footer>
+            <p><strong>Chunk Locked</strong> - Minecraft Fabric Mod</p>
+            <p>Generated from markdown test files</p>
+        </footer>
+    </div>
+
+    <script>
+        // Test data from markdown files
+        const testSuites = [
+    {
+        "id": "advancementintegration",
+        "title": "Advancement Integration",
+        "tests": [
+            {
+                "id": "AdvancementIntegration-1",
+                "title": "Basic Advancement Completion Detection",
+                "prerequisites": "Mod installed and loaded in a new world\nPlayer in survival mode",
+                "steps": "Start a new Minecraft world with the mod installed\nOpen the console/logs to view debug output\nComplete a simple advancement (e.g., \"Getting Wood\" - collect wood from a tree)\nObserve the console output",
+                "expected": "Console should display a log message:\n```\n[chunk-locked] Player <PlayerName> completed advancement: minecraft:story/mine_wood (criterion: has_log)\n```",
+                "edgeCases": "Complete the same advancement again (shouldn't be possible without /advancement revoke)\nComplete advancement with multiple criteria (only fires when ALL criteria met)\n---"
+            },
+            {
+                "id": "AdvancementIntegration-2",
+                "title": "Multiple Advancement Completions",
+                "prerequisites": "Mod installed and loaded\nPlayer in survival mode with some resources",
+                "steps": "Start a new world\nComplete \"Getting Wood\" advancement\nCraft a crafting table to complete \"Benchmarking\" advancement\nCraft a wooden pickaxe to complete \"Time to Mine!\" advancement\nCheck console logs after each completion",
+                "expected": "Three separate log messages should appear:\n```\n[chunk-locked] Player <PlayerName> completed advancement: minecraft:story/mine_wood (criterion: has_log)\n[chunk-locked] Player <PlayerName> completed advancement: minecraft:story/craft_crafting_table (criterion: has_crafting_table)\n[chunk-locked] Player <PlayerName> completed advancement: minecraft:story/craft_pickaxe (criterion: has_wooden_pickaxe)\n```",
+                "edgeCases": "Complete advancements rapidly in succession\nComplete advancements in different order than designed progression\n---"
+            },
+            {
+                "id": "AdvancementIntegration-3",
+                "title": "Multi-Criteria Advancement",
+                "prerequisites": "Mod installed and loaded\nPlayer has basic tools and resources",
+                "steps": "Start working toward \"Two Birds, One Arrow\" advancement\nPartially complete criteria (e.g., have a bow but not yet killed two entities)\nObserve console - should see NO message yet\nComplete the final criterion (kill two phantoms with one arrow)\nCheck console after full completion",
+                "expected": "No log message appears during partial progress\nLog message appears ONLY when final criterion is met:\n```\n[chunk-locked] Player <PlayerName> completed advancement: minecraft:adventure/two_birds_one_arrow (criterion: <final_criterion_name>)\n```",
+                "edgeCases": "Complete criteria out of order\nComplete multiple criteria in the same game tick\n---"
+            },
+            {
+                "id": "AdvancementIntegration-4",
+                "title": "Command-Based Advancement Grant",
+                "prerequisites": "Mod installed and loaded\nPlayer has OP permissions or in single player",
+                "steps": "Start a world and open chat\nUse command: `/advancement grant @s only minecraft:story/mine_wood`\nObserve console output\nUse command: `/advancement revoke @s only minecraft:story/mine_wood`\nUse command: `/advancement grant @s only minecraft:story/mine_wood` again\nObserve console output",
+                "expected": "First grant triggers log message\nRevoke does NOT trigger any message\nSecond grant (after revoke) triggers log message again\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "AdvancementIntegration-5",
+                "title": "Advancement Completion in Multiplayer",
+                "prerequisites": "Mod installed on server\nTwo players connected to server",
+                "steps": "Start a multiplayer server with mod installed\nPlayer 1 completes \"Getting Wood\" advancement\nCheck server console\nPlayer 2 completes \"Getting Wood\" advancement\nCheck server console again",
+                "expected": "Two separate log messages:\n```\n[chunk-locked] Player Player1 completed advancement: minecraft:story/mine_wood (criterion: has_log)\n[chunk-locked] Player Player2 completed advancement: minecraft:story/mine_wood (criterion: has_log)\n```",
+                "edgeCases": "Both players complete same advancement simultaneously\nOne player completes multiple advancements while other is online\nPlayer completes advancement then disconnects immediately\n---"
+            },
+            {
+                "id": "AdvancementIntegration-6",
+                "title": "Advancement Progress Persistence",
+                "prerequisites": "Mod installed and loaded\nPartial progress on a multi-criteria advancement",
+                "steps": "Start working on \"The Parrots and the Bats\" (breed all animals)\nBreed several but not all required animals\nSave and quit the world\nRestart the world\nBreed the remaining required animals to complete the advancement\nCheck console",
+                "expected": "No messages during partial progress before or after restart\nLog message appears only when final animal is bred:\n```\n[chunk-locked] Player <PlayerName> completed advancement: minecraft:husbandry/bred_all_animals (criterion: <final_animal>)\n```\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "AdvancementIntegration-7",
+                "title": "No Fake Player Detection",
+                "prerequisites": "Mod installed\nAccess to a fake player mod/system (e.g., Carpet mod with fake players)",
+                "steps": "Install both this mod and Carpet mod (or equivalent)\nSpawn a fake player using `/player <name> spawn`\nGrant advancement to fake player: `/advancement grant <fake_player> only minecraft:story/mine_wood`\nCheck console",
+                "expected": "No log message should appear for fake player advancement completion\n(Fake players are filtered by the mixin injection point)\n**Note**: This test requires additional mods and may be optional\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "AdvancementIntegration-8",
+                "title": "Hidden Advancement Completion",
+                "prerequisites": "Mod installed\nAbility to complete a hidden advancement",
+                "steps": "Prepare resources to complete a hidden advancement (e.g., \"How Did We Get Here?\" effect)\nComplete the hidden advancement\nCheck console",
+                "expected": "Log message appears even for hidden advancements:\n```\n[chunk-locked] Player <PlayerName> completed advancement: minecraft:nether/all_effects (criterion: <criterion>)\n```\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "AdvancementIntegration-9",
+                "title": "Data Pack Custom Advancements",
+                "prerequisites": "Mod installed\nCustom advancement data pack installed",
+                "steps": "Install a data pack with custom advancements\nReload data packs: `/reload`\nComplete one of the custom advancements\nCheck console",
+                "expected": "Custom advancement completion is detected and logged:\n```\n[chunk-locked] Player <PlayerName> completed advancement: <datapack_namespace>:<advancement_path> (criterion: <criterion>)\n```",
+                "edgeCases": "Custom advancement with multiple criteria\nCustom advancement that grants other advancements\nMalformed custom advancement (should not crash)\n---"
+            },
+            {
+                "id": "AdvancementIntegration-10",
+                "title": "Rapid Advancement Spam",
+                "prerequisites": "Mod installed\nOP permissions",
+                "steps": "Prepare a command block or command sequence\nGrant and revoke the same advancement rapidly:\n```\n/advancement grant @s only minecraft:story/mine_wood\n/advancement revoke @s only minecraft:story/mine_wood\n/advancement grant @s only minecraft:story/mine_wood\n/advancement revoke @s only minecraft:story/mine_wood\n/advancement grant @s only minecraft:story/mine_wood\n```\nCheck console and game performance",
+                "expected": "Each grant produces a log message\nNo performance degradation\nNo duplicate/missing messages\nNo crashes or errors\n---\n## Verification Checklist\nAfter completing all test cases, verify:\n[ ] Event fires for single-criterion advancements\n[ ] Event fires for multi-criterion advancements (only when complete)\n[ ] Event does NOT fire for partial progress\n[ ] Event includes correct player name in logs\n[ ] Event includes correct advancement identifier\n[ ] Event includes correct criterion name\n[ ] Multiple players tracked independently\n[ ] Works with command-granted advancements\n[ ] Works with data pack custom advancements\n[ ] No fake player advancements logged\n[ ] No performance issues with rapid completions\n[ ] No memory leaks over extended play sessions\n[ ] Advancement progress persists across restarts\n---\n## Known Limitations\nFake player filtering relies on Minecraft's `isEffectiveAi()` check in `PlayerAdvancementTracker.grantCriterion()`\nCustom advancement data packs must be properly formatted to be detected\nAdvancement revocation does NOT trigger any event (by design)\n---\n## Debugging Tips\nIf events are not firing:\nCheck that mixin is registered in `chunk-locked.mixins.json`\nVerify mixin is loading at startup (check logs for mixin messages)\nConfirm event listener is registered in `Chunklocked.onInitialize()`\nCheck that advancement is actually completing (use `/advancement` command)\nVerify mod is loaded in the correct environment (server-side)\n---\n**Test Document Version**: 1.0\n**Last Updated**: January 10, 2026\n**Phase**: 1 - Custom Event Infrastructure",
+                "edgeCases": ""
+            }
+        ]
+    },
+    {
+        "id": "chunkstorageandmanagement",
+        "title": "Chunk Storage and Management",
+        "tests": [
+            {
+                "id": "ChunkStorageAndManagement-1",
+                "title": "Basic Chunk Unlock/Lock Operations",
+                "prerequisites": "Start fresh world or clear test player's data\nTest player has at least 3 unlock credits",
+                "steps": "Check player's unlocked chunks at spawn\nAward player 3 credits: `/chunk-locked credits add <player> 3`\nUnlock a chunk adjacent to spawn: `/chunk-locked unlock <x> <z>`\nVerify chunk is marked as unlocked: `/chunk-locked info <x> <z>`\nLock the chunk: `/chunk-locked lock <x> <z>`\nVerify chunk is marked as locked: `/chunk-locked info <x> <z>`",
+                "expected": "Unlock operation succeeds when credits available\nLock operation succeeds on unlocked chunks\nInfo command shows correct unlock status",
+                "edgeCases": "Try to unlock without credits (should fail)\nTry to lock already locked chunk (no-op)\nTry to unlock already unlocked chunk (no-op)\n---"
+            },
+            {
+                "id": "ChunkStorageAndManagement-2",
+                "title": "Multiple Chunks and Player Isolation",
+                "prerequisites": "Two test players\nEach player has 5 credits",
+                "steps": "Player 1 unlocks chunks at (0,0), (1,0), (0,1)\nPlayer 2 unlocks chunks at (10,10), (11,10)\nQuery Player 1's chunks: `/chunk-locked list <player1>`\nQuery Player 2's chunks: `/chunk-locked list <player2>`\nVerify each player only sees their own unlocked chunks",
+                "expected": "Each player's unlocks are independent\nNo cross-contamination between players\nList command shows correct chunks per player",
+                "edgeCases": "Multiple players unlocking same chunk coordinates\nQuery non-existent player (should show 0 chunks)\n---"
+            },
+            {
+                "id": "ChunkStorageAndManagement-3",
+                "title": "Save/Load Persistence",
+                "prerequisites": "Fresh world\nTest player with 10 credits",
+                "steps": "Unlock 5 random chunks in different quadrants (positive/negative coordinates)\nRecord the exact chunk coordinates unlocked\nSave and quit the world\nReload the world\nQuery unlocked chunks: `/chunk-locked list <player>`\nVerify all 5 chunks are still unlocked",
+                "expected": "All unlocked chunks persist across save/load\nCredits remaining persist\nNo data corruption or loss",
+                "edgeCases": "Chunks with negative coordinates\nLarge coordinate values (e.g., 100000, 100000)\nWorld save during chunk unlock operation\n---"
+            },
+            {
+                "id": "ChunkStorageAndManagement-4",
+                "title": "ChunkManager API Integration",
+                "prerequisites": "Test player with credits\nAccess to debug commands or test mod",
+                "steps": "Use ChunkManager.getAvailableCredits() - verify correct count\nUse ChunkManager.tryUnlockChunk() - verify success with credits\nUse ChunkManager.tryUnlockChunk() again on same chunk - verify failure\nUse ChunkManager.isChunkUnlocked() - verify returns true\nUse ChunkManager.getPlayerChunks() - verify returns correct set\nUse ChunkManager.forceUnlockChunk() - verify unlocks without spending credit",
+                "expected": "All API methods work as documented\nCredit spending is atomic\nNo race conditions or inconsistencies",
+                "edgeCases": "Rapid successive unlock calls\nConcurrent access from different threads\nNull parameter handling\n---"
+            },
+            {
+                "id": "ChunkStorageAndManagement-5",
+                "title": "Area Detection with Connected Chunks",
+                "prerequisites": "Test player with 10 credits\nEmpty chunk unlock state",
+                "steps": "Unlock a 2x2 grid of chunks: (0,0), (1,0), (0,1), (1,1)\nQuery areas: Check if detected as single connected area\nUnlock disconnected chunk at (10,10)\nQuery areas again: Should show 2 separate areas\nBridge the gap by unlocking chunks between them\nQuery areas: Should now show single large area",
+                "expected": "BFS algorithm correctly identifies connected regions\nMultiple disconnected areas are tracked separately\nArea merging works when bridge is created",
+                "edgeCases": "L-shaped connected regions\nSingle isolated chunks\nVery large contiguous areas (50+ chunks)\nNegative coordinate chunks\n---"
+            },
+            {
+                "id": "ChunkStorageAndManagement-6",
+                "title": "Negative Coordinates and Edge Cases",
+                "prerequisites": "Test player with 20 credits",
+                "steps": "Unlock chunks in all quadrants:\nPositive X, Positive Z: (5, 5)\nNegative X, Positive Z: (-5, 5)\nPositive X, Negative Z: (5, -5)\nNegative X, Negative Z: (-5, -5)\nUnlock chunk at origin: (0, 0)\nUnlock chunks at extreme coordinates: (1000000, 1000000)\nQuery all unlocked chunks\nSave and reload world\nVerify all chunks still unlocked",
+                "expected": "All coordinate quadrants work correctly\nOrigin (0,0) is handled properly\nLarge coordinates don't cause overflow\nPersistence works with all coordinate types",
+                "edgeCases": "Integer.MAX_VALUE coordinates\nInteger.MIN_VALUE coordinates\nRapid unlock/lock cycles\n---"
+            },
+            {
+                "id": "ChunkStorageAndManagement-7",
+                "title": "Credit Management Edge Cases",
+                "prerequisites": "Test player",
+                "steps": "Set credits to 0: `/chunk-locked credits set <player> 0`\nTry to unlock chunk (should fail)\nSet credits to 1000: `/chunk-locked credits set <player> 1000`\nVerify can unlock many chunks\nSpend all credits by unlocking\nVerify credit count is 0\nAdd negative credits (should fail/error)",
+                "expected": "Cannot unlock with 0 credits\nCredit operations are bounds-checked\nNegative credit values rejected\nInteger overflow handled gracefully",
+                "edgeCases": "Setting credits to Integer.MAX_VALUE\nSpending more credits than available\nConcurrent credit modifications\n---"
+            },
+            {
+                "id": "ChunkStorageAndManagement-8",
+                "title": "ChunkUnlockData NBT Serialization",
+                "prerequisites": "Fresh world\nTest player with credits",
+                "steps": "Unlock 3 chunks with different coordinates\nCheck world save folder for chunk-locked data file\nOpen NBT file with NBT editor\nVerify structure:\nDataVersion = 2\nPlayers section exists\nPlayer UUID present\nUnlockedChunks array contains 3 entries\nCredits value is correct\nManually edit NBT to add a chunk\nReload world\nVerify manual edit persisted",
+                "expected": "NBT structure matches v2 format\nAll data serializes correctly\nManual NBT edits work (data migration compatible)\nNo data corruption",
+                "edgeCases": "Empty UnlockedChunks array\nMissing player data\nCorrupt NBT (should fallback gracefully)\n---"
+            },
+            {
+                "id": "ChunkStorageAndManagement-9",
+                "title": "Multi-Player Server Environment",
+                "prerequisites": "Multiplayer server\n3 connected players",
+                "steps": "Each player unlocks different chunks\nPlayers check their own unlocked chunks\nOne player leaves and rejoins\nVerify their chunks still unlocked\nAdmin unlocks chunk for offline player\nOffline player rejoins\nVerify admin unlock persisted",
+                "expected": "Each player's data is independent\nServer handles concurrent operations\nData persists for offline players\nAdmin operations work for any player",
+                "edgeCases": "Player leaves during unlock operation\nServer crashes mid-save\nMultiple admins modifying same player\n---"
+            },
+            {
+                "id": "ChunkStorageAndManagement-10",
+                "title": "Large Dataset Performance",
+                "prerequisites": "Test player\nSufficient credits (10000+)",
+                "steps": "Unlock 1000 chunks in a grid pattern\nMeasure time to save world (should be <100ms)\nReload world\nMeasure time to load chunk data (should be <100ms)\nQuery if specific chunk is unlocked (should be instant)\nList all unlocked chunks (should be <50ms)",
+                "expected": "O(1) lookup performance maintained\nSave/load times remain reasonable\nNo memory leaks\nUI remains responsive\n**Performance Targets**:\nChunk lookup: <1ms\nSave operation: <100ms for 1000 chunks\nLoad operation: <100ms for 1000 chunks\nMemory usage: <10MB for 10,000 chunks\n---\n## Testing Checklist\n[ ] Test Case 1: Basic Operations\n[ ] Test Case 2: Player Isolation\n[ ] Test Case 3: Persistence\n[ ] Test Case 4: API Integration\n[ ] Test Case 5: Area Detection\n[ ] Test Case 6: Negative Coordinates\n[ ] Test Case 7: Credit Edge Cases\n[ ] Test Case 8: NBT Serialization\n[ ] Test Case 9: Multiplayer\n[ ] Test Case 10: Performance\n---\n## Known Limitations\nChunkPos requires Minecraft runtime - cannot unit test\nArea detection requires actual BFS traversal in live environment\nNBT serialization needs file system access\nMultiplayer scenarios need actual server environment\n## Future: Integration Test Framework\nConsider implementing Fabric Game Tests for automated testing:\nhttps://fabricmc.net/wiki/tutorial:testing\nRequires Minecraft test harness setup\nCan run in-game automated test scenarios\nProvides reproducible test environment",
+                "edgeCases": ""
+            }
+        ]
+    },
+    {
+        "id": "configurationsystem",
+        "title": "Configuration System",
+        "tests": [
+            {
+                "id": "ConfigurationSystem-1",
+                "title": "Default Configuration Creation",
+                "prerequisites": "Fresh Minecraft installation or deleted config file\nChunk Locked mod installed",
+                "steps": "Delete `config/chunk-locked-advancements.json` if it exists\nStart Minecraft server/client\nCheck the `config/` directory",
+                "expected": "`chunk-locked-advancements.json` file should be created automatically\nFile should contain default values:\n`defaultCredits: 1`\nCustom rewards for major advancements (adventuring_time: 20, dragon_egg: 10, etc.)\nBlacklist for trivial advancements (story/root, story/mine_stone, story/upgrade_tools)\n`allowRevoke: false`\n`enableNotifications: true`\nConsole should log: \"Loading advancement reward configuration from: config/chunk-locked-advancements.json\"\nConsole should log: \"Loaded X custom rewards and Y blacklisted advancements\"",
+                "edgeCases": "Verify file is valid JSON and can be opened in a text editor\nVerify file is formatted with pretty printing (indentation)\n---"
+            },
+            {
+                "id": "ConfigurationSystem-2",
+                "title": "Configuration Loading",
+                "prerequisites": "Existing config file at `config/chunk-locked-advancements.json`",
+                "steps": "Edit `config/chunk-locked-advancements.json` and set `defaultCredits: 5`\nAdd custom reward: `\"minecraft:story/mine_diamond\": 100`\nSave the file\nRestart Minecraft",
+                "expected": "Console should log: \"Configuration loaded successfully\"\nConsole should show the loaded config values in logs\nWhen completing \"Mine Diamond\" advancement, player should receive 100 credits (verify in later phases)\nWhen completing other advancements, player should receive 5 credits (changed from default 1)",
+                "edgeCases": "Check console for \"Loaded 9 custom rewards\" (8 defaults + 1 added)\n---"
+            },
+            {
+                "id": "ConfigurationSystem-3",
+                "title": "Invalid Configuration Handling",
+                "prerequisites": "Existing config file",
+                "steps": "Edit `config/chunk-locked-advancements.json` and corrupt the JSON syntax:\n```\n{ \"defaultCredits\": 1, invalid syntax here }\n```\nSave and restart Minecraft",
+                "expected": "Console should log ERROR: \"Configuration file has invalid JSON syntax\"\nConsole should log: \"Using default configuration\"\nServer/client should start successfully (no crash)\nConfig file should be overwritten with default values\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ConfigurationSystem-4",
+                "title": "Negative Credits Validation",
+                "prerequisites": "Existing config file",
+                "steps": "Edit config and set `\"defaultCredits\": -5`\nSave and restart Minecraft",
+                "expected": "Console should log ERROR: \"Configuration validation failed: defaultCredits cannot be negative\"\nConsole should log: \"Using default configuration\"\nConfig file should be reset to defaults\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ConfigurationSystem-5",
+                "title": "Custom Rewards Applied",
+                "prerequisites": "Config file with custom reward set",
+                "steps": "Edit config and set:\n```json\n\"customRewards\": {\n\"minecraft:adventure/adventuring_time\": 50\n}\n```\nSave and restart Minecraft\nUse `/advancement grant @s minecraft:adventure/adventuring_time`",
+                "expected": "Console should log: \"Awarded 50 credit(s) to [player] for completing advancement: minecraft:adventure/adventuring_time\"\nPlayer should receive 50 credits (verify with future commands/UI)\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ConfigurationSystem-6",
+                "title": "Blacklist Prevents Credits",
+                "prerequisites": "Config file with blacklist",
+                "steps": "Edit config and add to blacklist:\n```json\n\"blacklist\": [\n\"minecraft:story/mine_diamond\"\n]\n```\nSave and restart Minecraft\nUse `/advancement grant @s minecraft:story/mine_diamond`",
+                "expected": "Console should log: \"Advancement minecraft:story/mine_diamond is blacklisted, no credits awarded to [player]\"\nPlayer should receive 0 credits\nNo \"Awarded X credit(s)\" message should appear\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ConfigurationSystem-7",
+                "title": "Partial Configuration",
+                "prerequisites": "Config file",
+                "steps": "Edit config file to only contain:\n```json\n{\n\"defaultCredits\": 10\n}\n```\nSave and restart Minecraft",
+                "expected": "Console should log: \"Configuration loaded successfully\"\n`defaultCredits` should be 10 (from file)\nOther fields should use defaults:\n`customRewards` should be empty map\n`blacklist` should be empty list\n`allowRevoke` should be false\n`enableNotifications` should be true\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ConfigurationSystem-8",
+                "title": "Empty Config File",
+                "prerequisites": "Config file",
+                "steps": "Delete all content from config file (make it empty)\nSave and restart Minecraft",
+                "expected": "Console should log: \"Configuration file is empty or invalid\"\nConsole should log: \"Using default configuration\"\nConfig file should be regenerated with default values\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ConfigurationSystem-9",
+                "title": "Missing Config Directory",
+                "prerequisites": "No `config/` directory",
+                "steps": "Delete the `config/` directory entirely\nStart Minecraft",
+                "expected": "`config/` directory should be created\n`config/chunk-locked-advancements.json` should be created with defaults\nNo errors should occur\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ConfigurationSystem-10",
+                "title": "Unicode and Special Characters",
+                "prerequisites": "Config file",
+                "steps": "Add custom reward with unicode:\n```json\n\"customRewards\": {\n\"mymod:special_advancement\": 15\n}\n```\nSave and restart Minecraft",
+                "expected": "Configuration should load without errors\nUnicode characters should be preserved\nCustom reward should work correctly\n---\n## Configuration Integration Checklist\nAfter completing all test cases, verify:\n[x] Default config file created automatically on first run\n[x] Valid custom configurations load correctly\n[x] Invalid JSON falls back to defaults gracefully\n[x] Validation catches negative/invalid values\n[x] Custom rewards override default credits\n[x] Blacklist prevents credit awards\n[x] Partial configs merge with defaults\n[x] Empty/corrupt files regenerate defaults\n[x] Missing directories are created\n[x] Config changes apply after restart\n[x] No crashes from any config scenario\n[x] All error messages are clear and helpful",
+                "edgeCases": ""
+            }
+        ]
+    },
+    {
+        "id": "networksynchronization",
+        "title": "Network Synchronization & Client Display",
+        "tests": [
+            {
+                "id": "NetworkSynchronization-1",
+                "title": "Credit Sync on First Login",
+                "prerequisites": "Single-player world or active server\nFirst login to fresh world",
+                "steps": "Join the world/server\nCheck client-side credit data is synchronized\nVerify no errors in logs related to packet handling\nCheck chat for any sync confirmation messages (if logging enabled)",
+                "expected": "Client-side credit holder is updated with server data (0 credits for new player)\nNo errors in console\nSubsequent UI elements can display credit count",
+                "edgeCases": "Test with player who has existing progression data\nTest on server reconnection\nVerify data persists after client-side cache\n---"
+            },
+            {
+                "id": "NetworkSynchronization-2",
+                "title": "Credit Sync on Advancement Completion",
+                "prerequisites": "World loaded with player\nPlayer can access advancements",
+                "steps": "Complete an advancement that awards credits\nExample: Kill any mob (usually awards 1 credit)\nObserve chat notification (if notifications enabled)\nCheck that client data is updated immediately\nVerify no console errors during sync",
+                "expected": "Chat message shows credit award (if notifications enabled)\nSound effect plays (experience orb sound)\nClient credit count updates to reflect new total\nNo network errors in logs",
+                "edgeCases": "Complete advancement awarding 0 credits (blacklisted)\nComplete advancement awarding custom reward amount\nComplete advancement while offline (should sync on next login)\nRapid advancement completions (test concurrent syncs)\n---"
+            },
+            {
+                "id": "NetworkSynchronization-3",
+                "title": "Credit Sync Across Multiple Players",
+                "prerequisites": "Local multiplayer server or online server with friends\nMultiple players connected",
+                "steps": "Player A completes an advancement (earns 5 credits)\nPlayer B observes their own credit count\nPlayer A earns another advancement\nPlayer B checks they still have their original credit count\nPlayer B completes an advancement\nPlayer A checks their credit count is unchanged",
+                "expected": "Each player's client shows only their own credits\nPlayer A's credits: 5 → updated amount after second advancement\nPlayer B's credits: unchanged until they earn advancement\nNo cross-player credit data leakage",
+                "edgeCases": "One player joins while another earns credits (timing)\nPlayer disconnects mid-sync\nMultiple rapid completions by different players\n---"
+            },
+            {
+                "id": "NetworkSynchronization-4",
+                "title": "Dimension Changes",
+                "prerequisites": "Player in Overworld\nAccess to Nether or End",
+                "steps": "Note current credit count in Overworld\nTravel to Nether via portal\nCheck credit display still shows correct count\nComplete an advancement in Nether\nVerify credits update correctly\nReturn to Overworld\nVerify credits are still correct",
+                "expected": "Credits display correctly in all dimensions\nAdvancements completed in any dimension sync correctly\nNo dimensional data isolation issues\nCredit count persists and updates consistently",
+                "edgeCases": "Travel between all three dimensions\nComplete advancement in Nether, return to Overworld\nRapid dimension changes with advancement completion\nDisconnect in one dimension, reconnect in another\n---"
+            },
+            {
+                "id": "NetworkSynchronization-5",
+                "title": "Disconnect and Reconnection",
+                "prerequisites": "Player with earned credits\nAbility to disconnect and reconnect",
+                "steps": "Earn some credits in the world\nNote the credit count\nDisconnect from server (quit game)\nClose the game completely\nReopen game and rejoin the world\nCheck client credit data\nVerify it matches the saved server state",
+                "expected": "Client credit data is reset on disconnect\nClient credit data is restored on reconnection\nAll previously earned credits are still there\nNo data loss or duplication",
+                "edgeCases": "Disconnect during advancement completion\nRapid disconnect/reconnect cycles\nRejoin different server (should have different credit data)\nRejoin after server was shut down and restarted\n---"
+            },
+            {
+                "id": "NetworkSynchronization-6",
+                "title": "Network Packet Integrity",
+                "prerequisites": "Game with packet logging enabled (optional)\nNetwork monitoring tools (optional, advanced)",
+                "steps": "Enable debug logging with debug log level\nComplete advancements and earn various credit amounts\nObserve packet encode/decode messages in logs\nCheck that logged values match actual credits\nEarn large credit amounts and verify no overflow\nEarn zero credits and verify packet handling",
+                "expected": "Packet encode logs show correct values\nPacket decode logs show correct values\nNo integer overflow on large values\nZero credit amounts handled correctly\nPacket codec successfully round-trips all values",
+                "edgeCases": "Attempt to earn Integer.MAX_VALUE credits (system limit)\nComplete advancement awarding fractional credits (if supported)\nCorruption simulation (advanced, network packet inspection)\n---"
+            },
+            {
+                "id": "NetworkSynchronization-7",
+                "title": "Error Handling",
+                "prerequisites": "Game with error logging enabled\nAbility to trigger edge cases",
+                "steps": "Attempt to trigger network errors (advanced: kill network briefly)\nTry invalid credit values (negative, overflow)\nDisconnect during packet send\nSpam advancement completions\nCheck logs for any unhandled exceptions",
+                "expected": "No uncaught exceptions in logs\nNegative credits rejected with warning\nNetwork disconnections handled gracefully\nHigh-frequency syncs don't crash system\nError messages are clear and logged",
+                "edgeCases": "Network latency/lag scenarios\nServer thread contention\nMemory pressure while syncing data\nMalformed packet reception (security concern)\n---"
+            },
+            {
+                "id": "NetworkSynchronization-8",
+                "title": "HUD/UI Display Integration",
+                "prerequisites": "Mod with UI elements that display credits (future implementation)\nIn-game UI visible",
+                "steps": "Enable/open credit display HUD (when implemented)\nEarn credits via advancements\nObserve HUD updates in real-time\nComplete advancement with custom reward\nVerify HUD shows updated credit count\nSwitch to different UI views\nVerify credit data persists in memory",
+                "expected": "HUD displays correct credit count\nHUD updates within 1 frame of sync packet\nCredit count visible in all HUD states\nNo flickering or inconsistency in display\nUI accurately reflects server state",
+                "edgeCases": "UI hidden/shown during sync\nQuick succession of credit updates\nRapid dimension changes with UI visible\nLong gameplay session (memory integrity)\n---"
+            },
+            {
+                "id": "NetworkSynchronization-9",
+                "title": "Performance Impact",
+                "prerequisites": "Performance monitoring tools (F3 menu)\nMultiple players on server (if testing multiplayer)",
+                "steps": "Establish baseline FPS without advancements\nComplete advancements continuously and monitor FPS\nTest with multiple players earning credits simultaneously\nRun for extended period and check for memory leaks\nMonitor network bandwidth usage\nCheck CPU usage on server with active syncing",
+                "expected": "FPS remains stable during syncs (no spikes >5ms)\nMultiplayer syncs don't cause lag for other players\nNo memory accumulation over time\nNetwork bandwidth minimal (packets are small: 8 bytes)\nServer CPU impact negligible",
+                "edgeCases": "10+ players earning credits simultaneously\nLong (1+ hour) gameplay session\nServer under other load (mob spawning, redstone)\nResource-constrained environments\n---"
+            },
+            {
+                "id": "NetworkSynchronization-10",
+                "title": "Localization and Messaging",
+                "prerequisites": "Game set to different language (if available)\nDebug messages enabled",
+                "steps": "Complete advancement and check notification message\nCheck credit display formatting\nVerify advancement names display correctly\nCheck all error messages are readable\nTest with non-English locale if available",
+                "expected": "All notification messages display correctly\nNo placeholder text visible to player\nNumbers format according to locale\nAdvancement names visible and accurate\nError messages are clear and helpful",
+                "edgeCases": "Very long advancement names\nAdvancement names with special characters\nMultiple line messages\nRTL (right-to-left) languages (if supported)\n---\n## Known Limitations and Assumptions\n**Network Reliability**: Assumes reasonably reliable network connection. Packet loss may cause temporary desync.\n**Thread Safety**: Credit sync assumes server thread execution for all modifications.\n**Packet Order**: Relies on Minecraft's packet delivery order guarantee.\n**Multiplayer**: Tested with local multiplayer and online servers.\n---\n## Debug Commands (if implemented)\n`/chunklocked credits` - Display current player credits\n`/chunklocked info <player>` - Admin command to view player's credit data\n`/chunklocked reload` - Reload configuration\n---\n## Troubleshooting\n**Credits not syncing after advancement**:\nCheck that advancement completion is detected (look for log messages)\nVerify NotificationManager.syncCreditsToClient() is being called\nCheck that ServerPlayNetworking is properly configured\nVerify client packet handler is registered\n**Client shows zero credits after login**:\nCheck player data on server (if available)\nVerify ChunkUnlockData is loaded correctly\nCheck that initial sync packet is sent on player join\nLook for exceptions in packet sending\n**Crashes during sync**:\nCheck for integer overflow in credit calculations\nVerify packet encoding doesn't exceed buffer size\nLook for null pointer exceptions in packet data\nCheck JVM memory isn't exhausted\n**Performance degradation**:\nMonitor packet frequency (should be 1-2 per advancement)\nCheck for packet send loops (unbounded iteration)\nVerify client packet handler doesn't block main thread\nProfile CPU usage on both sides\n---\n## Test Sign-Off\n[ ] All test cases passed\n[ ] No critical errors found\n[ ] Performance is acceptable\n[ ] Multiplayer functionality verified\n[ ] Ready for public release\n**Tester**: **\\*\\*\\*\\***\\_**\\*\\*\\*\\***\n**Date**: **\\*\\*\\*\\***\\_**\\*\\*\\*\\***\n**Notes**: **\\*\\*\\*\\***\\_**\\*\\*\\*\\***"
+            }
+        ]
+    }
+];
+
+        // Current state
+        const state = {
+            completed: new Set(),
+            expanded: new Set()
+        };
+
+        // Initialize the test runner
+        function init() {
+            renderTestSuites();
+            updateStats();
+        }
+
+        // Render all test suites
+        function renderTestSuites() {
+            const container = document.getElementById('testSuites');
+            container.innerHTML = '';
+
+            testSuites.forEach(suite => {
+                const suiteElement = createTestSuite(suite);
+                container.appendChild(suiteElement);
+            });
+        }
+
+        // Create a test suite element
+        function createTestSuite(suite) {
+            const div = document.createElement('div');
+            div.className = 'test-suite';
+
+            const completed = suite.tests.filter(t => state.completed.has(t.id)).length;
+            const total = suite.tests.length;
+            const isExpanded = state.expanded.has(suite.id);
+
+            div.innerHTML = `
+                <div class="suite-header" onclick="toggleSuite('${suite.id}')">
+                    <h2>${suite.title}</h2>
+                    <span class="suite-progress">${completed}/${total}</span>
+                </div>
+                <div class="suite-content ${isExpanded ? 'expanded' : ''}" id="suite-${suite.id}">
+                    ${suite.tests.map(test => createTestCase(test)).join('')}
+                </div>
+            `;
+
+            return div;
+        }
+
+        // Create a test case HTML
+        function createTestCase(test) {
+            const isCompleted = state.completed.has(test.id);
+            return `
+                <div class="test-case ${isCompleted ? 'completed' : ''}" id="test-${test.id}">
+                    <div class="test-header">
+                        <input type="checkbox" 
+                               class="test-checkbox" 
+                               ${isCompleted ? 'checked' : ''}
+                               onchange="toggleTest('${test.id}')">
+                        <span class="test-title">${test.title}</span>
+                    </div>
+                    ${test.prerequisites ? `
+                    <div class="test-section">
+                        <strong>Prerequisites:</strong>
+                        <p>${escapeHtml(test.prerequisites)}</p>
+                    </div>
+                    ` : ''}
+                    ${test.steps ? `
+                    <div class="test-section">
+                        <strong>Steps:</strong>
+                        <p>${escapeHtml(test.steps)}</p>
+                    </div>
+                    ` : ''}
+                    ${test.expected ? `
+                    <div class="test-section">
+                        <strong>Expected Result:</strong>
+                        <p>${escapeHtml(test.expected)}</p>
+                    </div>
+                    ` : ''}
+                    ${test.edgeCases ? `
+                    <div class="test-section">
+                        <strong>Edge Cases:</strong>
+                        <p>${escapeHtml(test.edgeCases)}</p>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // Toggle test suite expansion
+        function toggleSuite(suiteId) {
+            if (state.expanded.has(suiteId)) {
+                state.expanded.delete(suiteId);
+            } else {
+                state.expanded.add(suiteId);
+            }
+            
+            const content = document.getElementById(`suite-${suiteId}`);
+            content.classList.toggle('expanded');
+        }
+
+        // Toggle test completion
+        function toggleTest(testId) {
+            if (state.completed.has(testId)) {
+                state.completed.delete(testId);
+            } else {
+                state.completed.add(testId);
+            }
+            
+            renderTestSuites();
+            updateStats();
+        }
+
+        // Update statistics
+        function updateStats() {
+            const total = testSuites.reduce((sum, suite) => sum + suite.tests.length, 0);
+            const completed = state.completed.size;
+            const remaining = total - completed;
+            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            document.getElementById('totalTests').textContent = total;
+            document.getElementById('completedTests').textContent = completed;
+            document.getElementById('remainingTests').textContent = remaining;
+            document.getElementById('progressPercent').textContent = percent + '%';
+
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = percent + '%';
+            progressFill.textContent = percent + '%';
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize on page load
+        init();
+    </script>
+</body>
+</html>

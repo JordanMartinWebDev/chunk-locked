@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "chunk-locked:block/barrier_block_v2"
+  },
+  "render_type": "minecraft:translucent"
+}

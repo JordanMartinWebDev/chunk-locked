@@ -1,6 +1,7 @@
 plugins {
 	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
 	id 'maven-publish'
+	id 'jacoco'
 }
 
 version = project.mod_version
@@ -39,12 +40,51 @@ fabricApi {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings loom.officialMojangMappings()
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 	
+	// Testing dependencies
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.0'
+	testImplementation 'org.mockito:mockito-core:5.0.0'
+	testImplementation 'org.mockito:mockito-junit-jupiter:5.0.0'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.9.0'
+}
+
+test {
+	useJUnitPlatform()
+	ignoreFailures = true
+	finalizedBy jacocoTestReport
+	
+	// Allow access to Minecraft internal methods for testing
+	jvmArgs(
+		'--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+		'--add-opens', 'java.base/java.util=ALL-UNNAMED'
+	)
+}
+
+jacoco {
+	toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = true
+		html.required = true
+		csv.required = false
+	}
+	
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: [
+				'**/mixin/**',
+				'**/Chunklocked.class'
+			])
+		}))
+	}
 }
 
 processResources {

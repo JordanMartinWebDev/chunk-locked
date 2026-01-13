@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"id": "chunk-locked",
+	"version": "${version}",
+	"name": "chunk-locked",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/chunk-locked/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"chunkloaded.Chunklocked"
+		],
+		"client": [
+			"chunkloaded.ChunklockedClient"
+		],
+		"fabric-datagen": [
+			"chunkloaded.ChunklockedDataGenerator"
+		]
+	},
+	"mixins": [
+		"chunk-locked.mixins.json",
+		{
+			"config": "chunk-locked.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
