@@ -81,7 +81,7 @@ public class BlockBreakProtection {
     if (shouldHave) {
       // Replace the broken block with a barrier immediately
       LOGGER.info("Block broken at barrier boundary {}, replacing with barrier", pos);
-      serverWorld.setBlock(pos, Blocks.BARRIER.defaultBlockState());
+      serverWorld.setBlockState(pos, Blocks.BARRIER.defaultBlockState());
     } else {
       LOGGER.info("Position {} is not a barrier boundary", pos);
     }

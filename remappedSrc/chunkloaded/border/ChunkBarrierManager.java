@@ -114,7 +114,7 @@ public class ChunkBarrierManager {
     // Remove all tracked barriers from the world
     for (Map.Entry<ChunkPos, Set<BlockPos>> entry : chunkBarriers.entrySet()) {
       for (BlockPos pos : entry.getValue()) {
-        world.setBlock(pos, Blocks.AIR.defaultBlockState());
+        world.setBlockState(pos, Blocks.AIR.defaultBlockState());
         totalRemoved++;
       }
     }
@@ -147,7 +147,7 @@ public class ChunkBarrierManager {
     int removedFromTracking = 0;
     if (trackedBarriers != null && !trackedBarriers.isEmpty()) {
       for (BlockPos pos : trackedBarriers) {
-        world.setBlock(pos, Blocks.AIR.defaultBlockState());
+        world.setBlockState(pos, Blocks.AIR.defaultBlockState());
         allBarrierPositions.remove(pos);
         removedFromTracking++;
       }
@@ -181,7 +181,7 @@ public class ChunkBarrierManager {
       for (int y = MIN_WORLD_Y; y <= MAX_WORLD_Y; y++) {
         BlockPos pos = new BlockPos(x, y, chunkWorldZ);
         if (world.getBlockState(pos).isOf(Chunklocked.BARRIER_BLOCK_V2)) {
-          world.setBlock(pos, Blocks.AIR.defaultBlockState());
+          world.setBlockState(pos, Blocks.AIR.defaultBlockState());
           allBarrierPositions.remove(pos);
           removed++;
         }
@@ -193,7 +193,7 @@ public class ChunkBarrierManager {
       for (int y = MIN_WORLD_Y; y <= MAX_WORLD_Y; y++) {
         BlockPos pos = new BlockPos(x, y, chunkWorldZ + CHUNK_SIZE - 1);
         if (world.getBlockState(pos).isOf(Chunklocked.BARRIER_BLOCK_V2)) {
-          world.setBlock(pos, Blocks.AIR.defaultBlockState());
+          world.setBlockState(pos, Blocks.AIR.defaultBlockState());
           allBarrierPositions.remove(pos);
           removed++;
         }
@@ -205,7 +205,7 @@ public class ChunkBarrierManager {
       for (int y = MIN_WORLD_Y; y <= MAX_WORLD_Y; y++) {
         BlockPos pos = new BlockPos(chunkWorldX, y, z);
         if (world.getBlockState(pos).isOf(Chunklocked.BARRIER_BLOCK_V2)) {
-          world.setBlock(pos, Blocks.AIR.defaultBlockState());
+          world.setBlockState(pos, Blocks.AIR.defaultBlockState());
           allBarrierPositions.remove(pos);
           removed++;
         }
@@ -217,7 +217,7 @@ public class ChunkBarrierManager {
       for (int y = MIN_WORLD_Y; y <= MAX_WORLD_Y; y++) {
         BlockPos pos = new BlockPos(chunkWorldX + CHUNK_SIZE - 1, y, z);
         if (world.getBlockState(pos).isOf(Chunklocked.BARRIER_BLOCK_V2)) {
-          world.setBlock(pos, Blocks.AIR.defaultBlockState());
+          world.setBlockState(pos, Blocks.AIR.defaultBlockState());
           allBarrierPositions.remove(pos);
           removed++;
         }
@@ -257,7 +257,7 @@ public class ChunkBarrierManager {
         for (int y = MIN_WORLD_Y; y <= MAX_WORLD_Y; y++) {
           BlockPos pos = new BlockPos(x, y, z1World);
           if (world.getBlockState(pos).isOf(Chunklocked.BARRIER_BLOCK_V2)) {
-            world.setBlock(pos, Blocks.AIR.defaultBlockState());
+            world.setBlockState(pos, Blocks.AIR.defaultBlockState());
             allBarrierPositions.remove(pos);
             removed++;
           }
@@ -271,7 +271,7 @@ public class ChunkBarrierManager {
         for (int y = MIN_WORLD_Y; y <= MAX_WORLD_Y; y++) {
           BlockPos pos = new BlockPos(x, y, z1World + CHUNK_SIZE - 1);
           if (world.getBlockState(pos).isOf(Chunklocked.BARRIER_BLOCK_V2)) {
-            world.setBlock(pos, Blocks.AIR.defaultBlockState());
+            world.setBlockState(pos, Blocks.AIR.defaultBlockState());
             allBarrierPositions.remove(pos);
             removed++;
           }
@@ -285,7 +285,7 @@ public class ChunkBarrierManager {
         for (int y = MIN_WORLD_Y; y <= MAX_WORLD_Y; y++) {
           BlockPos pos = new BlockPos(x1World, y, z);
           if (world.getBlockState(pos).isOf(Chunklocked.BARRIER_BLOCK_V2)) {
-            world.setBlock(pos, Blocks.AIR.defaultBlockState());
+            world.setBlockState(pos, Blocks.AIR.defaultBlockState());
             allBarrierPositions.remove(pos);
             removed++;
           }
@@ -299,7 +299,7 @@ public class ChunkBarrierManager {
         for (int y = MIN_WORLD_Y; y <= MAX_WORLD_Y; y++) {
           BlockPos pos = new BlockPos(x1World + CHUNK_SIZE - 1, y, z);
           if (world.getBlockState(pos).isOf(Chunklocked.BARRIER_BLOCK_V2)) {
-            world.setBlock(pos, Blocks.AIR.defaultBlockState());
+            world.setBlockState(pos, Blocks.AIR.defaultBlockState());
             allBarrierPositions.remove(pos);
             removed++;
           }
@@ -596,7 +596,7 @@ public class ChunkBarrierManager {
         // Only place barriers in air or replaceable blocks (not solid terrain)
         BlockState existingState = world.getBlockState(pos);
         if (existingState.isAir() || existingState.isReplaceable()) {
-          world.setBlock(pos, Chunklocked.BARRIER_BLOCK_V2.defaultBlockState());
+          world.setBlockState(pos, Chunklocked.BARRIER_BLOCK_V2.defaultBlockState());
           barriers.add(pos);
         }
         // If there's already a solid block, it acts as a natural barrier - skip it

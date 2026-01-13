@@ -113,7 +113,7 @@ public class BatchBarrierOperations {
     for (BlockPos pos : batch.positions) {
       BlockState existingState = world.getBlockState(pos);
       if (existingState.isAir() || existingState.isReplaceable()) {
-        world.setBlock(pos, Blocks.BARRIER.defaultBlockState(), 2);
+        world.setBlockState(pos, Blocks.BARRIER.defaultBlockState(), 2);
       }
     }
 
@@ -143,7 +143,7 @@ public class BatchBarrierOperations {
     for (BlockPos pos : positions) {
       BlockState state = world.getBlockState(pos);
       if (state.getBlock() == Blocks.BARRIER) {
-        world.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+        world.setBlockState(pos, Blocks.AIR.defaultBlockState(), 2);
         affectedChunks.add(new ChunkPos(pos));
       }
     }

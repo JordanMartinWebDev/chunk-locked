@@ -25,7 +25,7 @@ public record CreditUpdatePacket(int credits, int total) implements CustomPacket
    * Packet ID for the credit update payload.
    * Namespace: chunklocked, Name: credit_update
    */
-  public static final CustomPacketPayload.Type<CreditUpdatePacket> ID = new CustomPacketPayload.Type<>(
+  public static final CustomPacketPayload.Id<CreditUpdatePacket> ID = new CustomPacketPayload.Id<>(
       Identifier.of("chunklocked", "credit_update"));
 
   /**
@@ -66,7 +66,7 @@ public record CreditUpdatePacket(int credits, int total) implements CustomPacket
    * @return The CustomPacketPayload.Id for this packet type
    */
   @Override
-  public CustomPacketPayload.Type<? extends CustomPacketPayload> getId() {
+  public CustomPacketPayload.Id<? extends CustomPacketPayload> getId() {
     return ID;
   }
 

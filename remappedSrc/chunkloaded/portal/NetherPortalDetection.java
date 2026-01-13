@@ -107,7 +107,7 @@ public class NetherPortalDetection {
         LOGGER.error("Failed to update barriers after unlocking chunk", e);
       }
 
-      player.sendSystemMessage(
+      player.sendMessage(
           net.minecraft.text.Component.literal(
               "§a✓ Chunk auto-unlocked via Nether portal! (Credits remaining: " +
                   chunkManager.getAvailableCredits(player.getUUID()) + ")"),

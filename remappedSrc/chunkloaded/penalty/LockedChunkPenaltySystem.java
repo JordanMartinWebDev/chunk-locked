@@ -206,7 +206,7 @@ public class LockedChunkPenaltySystem {
 
     // Only send warning every WARNING_MESSAGE_INTERVAL ticks
     if (lastWarning == null || (currentTick - lastWarning) >= WARNING_MESSAGE_INTERVAL) {
-      player.sendSystemMessage(
+      player.sendMessage(
           Component.literal("§c⚠ WARNING: You are in a locked chunk with no credits!")
               .append("\n")
               .append(Component.literal("§c⚠ Return to an unlocked chunk to escape the Wither effect")),
