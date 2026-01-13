@@ -11,6 +11,79 @@
 - **Java Version**: 21
 - **Fabric API**: 0.141.1+1.21.11
 - **Build Tool**: Gradle
+- **Mappings**: **Mojang Official Mappings** (NOT Yarn - see warning below)
+
+---
+
+## 🚨 CRITICAL: Mojang Mappings ONLY - NO YARN
+
+**This project uses Mojang official mappings exclusively. NEVER use Yarn mappings.**
+
+### Why This Matters
+
+We migrated from Yarn to Mojang mappings and it was extremely painful. Method names, field names, and class names are DIFFERENT between Yarn and Mojang. Mixing them causes compilation failures and runtime crashes.
+
+### build.gradle Configuration
+
+```gradle
+loom {
+    officialMojangMappings()  // ← MUST use this, NEVER use yarn mappings
+}
+```
+
+### Common Yarn → Mojang Differences
+
+| Yarn Name | Mojang Name |
+|-----------|-------------|
+| `getYaw()` | `getYRot()` |
+| `getPitch()` | `getXRot()` |
+| `player.age` | `player.tickCount` |
+| `getEntityWorld()` | `level()` |
+| `getBlockPos()` | `blockPosition()` |
+| `addStatusEffect()` | `addEffect()` |
+| `hasStatusEffect()` | `hasEffect()` |
+| `removeStatusEffect()` | `removeEffect()` |
+| `sendMessage(text, false)` | `sendSystemMessage(text)` |
+| `ResourceKey.location()` | `ResourceKey.identifier()` |
+| `grantCriterion` | `award` |
+| `getProgress` | `getOrStartProgress` |
+| `owner` (PlayerAdvancements) | `player` |
+| `teleportTo(TeleportTransition)` | `teleport(TeleportTransition)` |
+| `getId()` (packets) | `type()` |
+| `ID` (packet constant) | `TYPE` |
+
+### Block Registration in MC 1.21+
+
+In Minecraft 1.21+, you MUST call `setId()` on `BlockBehaviour.Properties` before constructing a Block:
+
+```java
+Identifier blockId = Identifier.fromNamespaceAndPath(MOD_ID, "my_block");
+ResourceKey<Block> blockKey = ResourceKey.create(BuiltInRegistries.BLOCK.key(), blockId);
+
+Block MY_BLOCK = Registry.register(
+    BuiltInRegistries.BLOCK,
+    blockKey,
+    new MyBlock(BlockBehaviour.Properties.of()
+        .setId(blockKey)  // ← REQUIRED in 1.21+
+        .strength(1.0f)
+        .noOcclusion()));
+```
+
+### If You're Unsure About a Method Name
+
+Use `javap` to inspect the actual Minecraft JAR:
+
+```bash
+cd ~/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-common/1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2
+javap -classpath minecraft-common-*.jar net.minecraft.server.level.ServerPlayer | grep methodName
+```
+
+### NEVER Do These Things
+
+- ❌ Never add `yarn_mappings` to build.gradle
+- ❌ Never use Fabric's `migrateMappings` to convert TO Yarn
+- ❌ Never copy code from Yarn-based mods without converting method names
+- ❌ Never assume Yarn documentation applies to this project
 
 ---
 
