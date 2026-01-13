@@ -65,12 +65,12 @@ public class BarrierFeedbackSystem {
     state.lastParticleTime = currentTime;
 
     // Emit particles at the hit position
-    Vec3 particlePos = Vec3.ofBottomCenter(hitPos);
+    Vec3 particlePos = Vec3.atBottomCenterOf(hitPos);
 
     // Send BARRIER particles (red prohibited icon) - only visible with barrier item
     // in hand
     // Also send SMOKE for visible feedback
-    world.spawnParticles(
+    world.sendParticles(
         ParticleTypes.SMOKE,
         particlePos.x,
         particlePos.y + 0.5,
@@ -106,11 +106,11 @@ public class BarrierFeedbackSystem {
     state.lastSoundTime = currentTime;
 
     // Play stone hit sound
-    Vec3 soundPos = Vec3.ofBottomCenter(hitPos);
+    Vec3 soundPos = Vec3.atBottomCenterOf(hitPos);
     world.playSound(
         null, // null = broadcast to all players
         soundPos.x, soundPos.y, soundPos.z,
-        SoundEvents.BLOCK_STONE_HIT,
+        SoundEvents.STONE_HIT,
         SoundSource.BLOCKS,
         0.5f, // volume
         1.2f // pitch (slightly higher for "barrier" feel)
@@ -161,12 +161,12 @@ public class BarrierFeedbackSystem {
     }
 
     // Calculate center of chunk
-    int centerX = chunkPos.getStartX() + 8;
-    int centerZ = chunkPos.getStartZ() + 8;
+    int centerX = chunkPos.getMinBlockX() + 8;
+    int centerZ = chunkPos.getMinBlockZ() + 8;
     int centerY = world.getSeaLevel(); // Use sea level instead of getTopY()
 
     // Emit happy villager particles (green sparkles)
-    world.spawnParticles(
+    world.sendParticles(
         ParticleTypes.HAPPY_VILLAGER,
         centerX + 0.5,
         centerY,
@@ -192,15 +192,15 @@ public class BarrierFeedbackSystem {
     }
 
     // Calculate center of chunk
-    int centerX = chunkPos.getStartX() + 8;
-    int centerZ = chunkPos.getStartZ() + 8;
+    int centerX = chunkPos.getMinBlockX() + 8;
+    int centerZ = chunkPos.getMinBlockZ() + 8;
     int centerY = world.getSeaLevel(); // Use sea level instead of getTopY()
 
     // Play bell sound (positive feedback)
     world.playSound(
         null, // broadcast to all players
         centerX + 0.5, centerY, centerZ + 0.5,
-        SoundEvents.BLOCK_NOTE_BLOCK_BELL,
+        SoundEvents.NOTE_BLOCK_BELL,
         SoundSource.BLOCKS,
         1.0f, // volume
         1.5f // pitch (higher = more celebratory)
@@ -227,7 +227,7 @@ public class BarrierFeedbackSystem {
     double z = player.getZ();
 
     // Emit particles at player position
-    world.spawnParticles(
+    world.sendParticles(
         ParticleTypes.HAPPY_VILLAGER,
         x,
         y + 1.0,
@@ -240,7 +240,7 @@ public class BarrierFeedbackSystem {
     world.playSound(
         null,
         x, y, z,
-        SoundEvents.BLOCK_NOTE_BLOCK_CHIME,
+        SoundEvents.NOTE_BLOCK_CHIME,
         SoundSource.PLAYERS,
         1.0f,
         1.2f);

@@ -161,17 +161,17 @@ public class NetworkSyncIntegrationTest {
   }
 
   /**
-   * Test packet ID consistency.
+   * Test packet type consistency.
    */
   @Test
-  @DisplayName("Packet ID is consistent and not null")
-  void testPacketId_Always_ReturnsConsistentId() {
+  @DisplayName("Packet type is consistent and not null")
+  void testPacketType_Always_ReturnsConsistentType() {
     CreditUpdatePacket packet1 = new CreditUpdatePacket(5, 10);
     CreditUpdatePacket packet2 = new CreditUpdatePacket(3, 7);
 
-    assertNotNull(packet1.getId());
-    assertNotNull(packet2.getId());
-    assertEquals(packet1.getId(), packet2.getId());
+    assertNotNull(packet1.type());
+    assertNotNull(packet2.type());
+    assertEquals(packet1.type(), packet2.type());
   }
 
   /**

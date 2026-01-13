@@ -101,8 +101,8 @@ public class NotificationManager {
   public void notifyCreditsAvailable(ServerPlayer player, int availableCredits, int totalCompleted) {
     Component message = Component.translatable(
         "chunklocked.credits.available",
-        Component.literal(String.valueOf(availableCredits)).withStyle(style -> style.withColor(TextColor.fromRgb(0xFFD700))), // Gold
-        Component.literal(String.valueOf(totalCompleted)).withStyle(style -> style.withColor(TextColor.fromRgb(0xAAAAAA))) // Gray
+        Component.literal(String.valueOf(availableCredits)).withStyle(style -> style.withColor(0xFFD700)), // Gold
+        Component.literal(String.valueOf(totalCompleted)).withStyle(style -> style.withColor(0xAAAAAA)) // Gray
     );
 
     player.sendSystemMessage(message);
@@ -212,9 +212,9 @@ public class NotificationManager {
 
     return Component.translatable(
         "chunklocked.advancement.credit_awarded",
-        Component.literal(String.valueOf(credits)).withStyle(style -> style.withColor(TextColor.fromRgb(0xFFD700))), // Gold
-        Component.literal(creditText).withStyle(style -> style.withColor(TextColor.fromRgb(0xFFD700))), // Gold
-        Component.literal(advancementName).withStyle(style -> style.withColor(TextColor.fromRgb(0xAAAAAA))) // Gray
+        Component.literal(String.valueOf(credits)).withStyle(style -> style.withColor(0xFFD700)), // Gold
+        Component.literal(creditText).withStyle(style -> style.withColor(0xFFD700)), // Gold
+        Component.literal(advancementName).withStyle(style -> style.withColor(0xAAAAAA)) // Gray
     );
   }
 

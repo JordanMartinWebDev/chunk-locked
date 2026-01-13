@@ -3,7 +3,8 @@
 	"package": "chunkloaded.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"ExampleMixin"
+		"advancement.PlayerAdvancementsMixin",
+		"portal.MixinServerPlayerEntity"
 	],
 	"injectors": {
 		"defaultRequire": 1

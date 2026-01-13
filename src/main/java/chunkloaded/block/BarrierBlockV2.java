@@ -35,23 +35,15 @@ public class BarrierBlockV2 extends Block {
    * Prevent item drops even if broken by creative players or commands.
    */
   @Override
-  public BlockState onBreak(Level world, BlockPos pos, BlockState state, Player player) {
-    return super.onBreak(world, pos, state, player);
+  public BlockState playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player) {
+    return super.playerWillDestroy(world, pos, state, player);
   }
 
   /**
-   * Make the block transparent - allows seeing through adjacent faces.
+   * Get the shade brightness - full light for translucent rendering.
    */
   @Override
-  public boolean isTransparent(BlockState state) {
-    return true;
-  }
-
-  /**
-   * Get the ambient occlusion light level - full light for translucent rendering.
-   */
-  @Override
-  public float getAmbientOcclusionLightLevel(BlockState state, BlockGetter world, BlockPos pos) {
+  public float getShadeBrightness(BlockState state, BlockGetter world, BlockPos pos) {
     return 1.0F;
   }
 }

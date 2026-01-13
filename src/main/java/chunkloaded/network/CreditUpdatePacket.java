@@ -22,11 +22,11 @@ import net.minecraft.resources.Identifier;
 public record CreditUpdatePacket(int credits, int total) implements CustomPacketPayload {
 
   /**
-   * Packet ID for the credit update payload.
+   * Packet type for the credit update payload.
    * Namespace: chunklocked, Name: credit_update
    */
-  public static final CustomPacketPayload.Type<CreditUpdatePacket> ID = new CustomPacketPayload.Type<>(
-      Identifier.of("chunklocked", "credit_update"));
+  public static final CustomPacketPayload.Type<CreditUpdatePacket> TYPE = new CustomPacketPayload.Type<>(
+      Identifier.fromNamespaceAndPath("chunklocked", "credit_update"));
 
   /**
    * Packet codec for encoding/decoding credit update packets.
@@ -35,39 +35,21 @@ public record CreditUpdatePacket(int credits, int total) implements CustomPacket
    * - credits (int, 4 bytes): Available credits to unlock chunks
    * - total (int, 4 bytes): Total advancements completed by player
    */
-  public static final StreamCodec<FriendlyByteBuf, CreditUpdatePacket> CODEC = StreamCodec.of(CreditUpdatePacket::encode,
-      CreditUpdatePacket::decode);
+  public static final StreamCodec<FriendlyByteBuf, CreditUpdatePacket> CODEC = StreamCodec.of(
+      (buf, packet) -> {
+        buf.writeInt(packet.credits);
+        buf.writeInt(packet.total);
+      },
+      buf -> new CreditUpdatePacket(buf.readInt(), buf.readInt()));
 
   /**
-   * Encodes this packet to a byte buffer.
+   * Gets the packet type for this payload.
    *
-   * @param buf The buffer to write to
-   */
-  private void encode(FriendlyByteBuf buf) {
-    buf.writeInt(this.credits);
-    buf.writeInt(this.total);
-  }
-
-  /**
-   * Decodes a packet from a byte buffer.
-   *
-   * @param buf The buffer to read from
-   * @return The decoded packet
-   */
-  private static CreditUpdatePacket decode(FriendlyByteBuf buf) {
-    int credits = buf.readInt();
-    int total = buf.readInt();
-    return new CreditUpdatePacket(credits, total);
-  }
-
-  /**
-   * Gets the packet ID for this payload.
-   *
-   * @return The CustomPacketPayload.Id for this packet type
+   * @return The CustomPacketPayload.Type for this packet type
    */
   @Override
-  public CustomPacketPayload.Type<? extends CustomPacketPayload> getId() {
-    return ID;
+  public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+    return TYPE;
   }
 
   /**

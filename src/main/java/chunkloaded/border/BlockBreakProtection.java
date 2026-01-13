@@ -69,7 +69,7 @@ public class BlockBreakProtection {
     }
 
     // Check what block was broken
-    boolean wasBarrier = state.isOf(Blocks.BARRIER);
+    boolean wasBarrier = state.is(Blocks.BARRIER);
     LOGGER.info("Block broken: {}, wasBarrier={}", state.getBlock(), wasBarrier);
 
     LOGGER.info("Checking if position {} should have a barrier for player {}...", pos, player.getUUID());
@@ -81,7 +81,7 @@ public class BlockBreakProtection {
     if (shouldHave) {
       // Replace the broken block with a barrier immediately
       LOGGER.info("Block broken at barrier boundary {}, replacing with barrier", pos);
-      serverWorld.setBlock(pos, Blocks.BARRIER.defaultBlockState());
+      serverWorld.setBlock(pos, Blocks.BARRIER.defaultBlockState(), 3);
     } else {
       LOGGER.info("Position {} is not a barrier boundary", pos);
     }

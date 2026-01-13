@@ -91,7 +91,7 @@ public class LockedChunkPenaltySystem {
       // Only check this player if enough time has passed since last check
       UUID playerUuid = player.getUUID();
       Long lastCheck = lastPenaltyCheckTick.get(playerUuid);
-      long currentTick = player.age;
+      long currentTick = player.tickCount;
 
       if (lastCheck != null && (currentTick - lastCheck) < PENALTY_CHECK_INTERVAL) {
         // Not time to check this player yet
@@ -120,7 +120,7 @@ public class LockedChunkPenaltySystem {
 
     // Penalty only applies in the Overworld
     // If player is in Nether/End, clear any pending Wither effect
-    if (!player.getEntityWorld().dimension().equals(net.minecraft.world.Level.OVERWORLD)) {
+    if (!player.level().dimension().equals(net.minecraft.world.level.Level.OVERWORLD)) {
       // Player is not in Overworld - remove Wither effect and tracking
       removeWitherPenalty(player);
       lastWarningTick.remove(player.getUUID());
@@ -128,7 +128,7 @@ public class LockedChunkPenaltySystem {
     }
 
     // Get player's current chunk
-    ChunkPos currentChunk = new ChunkPos(player.getBlockPos());
+    ChunkPos currentChunk = new ChunkPos(player.blockPosition());
 
     // Check if chunk is locked (globally)
     if (chunkManager.isChunkUnlockedGlobally(currentChunk)) {
@@ -170,10 +170,10 @@ public class LockedChunkPenaltySystem {
         false // show particles anyway
     );
 
-    player.addStatusEffect(witherEffect);
+    player.addEffect(witherEffect);
 
     // Log only periodically to avoid spam
-    if (player.age % WITHER_REAPPLY_INTERVAL == 0) {
+    if (player.tickCount % WITHER_REAPPLY_INTERVAL == 0) {
       LOGGER.debug("Applied Wither penalty to {} in locked chunk [{}, {}]",
           player.getName().getString(), chunk.x, chunk.z);
     }
@@ -187,8 +187,8 @@ public class LockedChunkPenaltySystem {
    * @param player The player to remove penalty from
    */
   private static void removeWitherPenalty(ServerPlayer player) {
-    if (player.hasStatusEffect(MobEffects.WITHER)) {
-      player.removeStatusEffect(MobEffects.WITHER);
+    if (player.hasEffect(MobEffects.WITHER)) {
+      player.removeEffect(MobEffects.WITHER);
       LOGGER.debug("Removed Wither penalty from {}", player.getName().getString());
     }
   }
@@ -201,7 +201,7 @@ public class LockedChunkPenaltySystem {
    * @param chunk  The locked chunk they're in
    */
   private static void sendWarningMessage(ServerPlayer player, ChunkPos chunk) {
-    long currentTick = player.age;
+    long currentTick = player.tickCount;
     Long lastWarning = lastWarningTick.get(player.getUUID());
 
     // Only send warning every WARNING_MESSAGE_INTERVAL ticks
@@ -209,8 +209,7 @@ public class LockedChunkPenaltySystem {
       player.sendSystemMessage(
           Component.literal("§c⚠ WARNING: You are in a locked chunk with no credits!")
               .append("\n")
-              .append(Component.literal("§c⚠ Return to an unlocked chunk to escape the Wither effect")),
-          false);
+              .append(Component.literal("§c⚠ Return to an unlocked chunk to escape the Wither effect")));
 
       lastWarningTick.put(player.getUUID(), currentTick);
 

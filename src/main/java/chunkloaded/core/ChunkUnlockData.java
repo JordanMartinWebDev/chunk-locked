@@ -98,7 +98,7 @@ public class ChunkUnlockData {
             // Load player data
             if (nbt.contains("Players")) {
                 CompoundTag playersNbt = nbt.getCompound("Players").orElse(new CompoundTag());
-                for (String uuidString : playersNbt.getAllKeys()) {
+                for (String uuidString : playersNbt.keySet()) {
                     try {
                         UUID playerUuid = UUID.fromString(uuidString);
                         CompoundTag playerNbt = playersNbt.getCompound(uuidString).orElse(new CompoundTag());
@@ -157,7 +157,7 @@ public class ChunkUnlockData {
                 if (nbt.contains("Players")) {
                     CompoundTag playersNbt = nbt.getCompound("Players").orElse(new CompoundTag());
                     int totalMigrated = 0;
-                    for (String uuidString : playersNbt.getAllKeys()) {
+                    for (String uuidString : playersNbt.keySet()) {
                         CompoundTag playerNbt = playersNbt.getCompound(uuidString).orElse(new CompoundTag());
                         if (playerNbt.contains("UnlockedChunks")) {
                             ListTag chunksList = playerNbt.getList("UnlockedChunks").orElse(new ListTag());
@@ -210,7 +210,7 @@ public class ChunkUnlockData {
                 // Write rewarded advancements
                 ListTag rewardedList = new ListTag();
                 for (String advancementId : progressionData.getRewardedAdvancements()) {
-                    rewardedList.add(StringTag.of(advancementId));
+                    rewardedList.add(StringTag.valueOf(advancementId));
                 }
                 playerNbt.put("RewardedAdvancements", rewardedList);
 

@@ -112,7 +112,7 @@ public class BatchBarrierOperations {
     // Place all blocks in the batch
     for (BlockPos pos : batch.positions) {
       BlockState existingState = world.getBlockState(pos);
-      if (existingState.isAir() || existingState.isReplaceable()) {
+      if (existingState.isAir() || existingState.canBeReplaced()) {
         world.setBlock(pos, Blocks.BARRIER.defaultBlockState(), 2);
       }
     }

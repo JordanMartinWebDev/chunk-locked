@@ -60,7 +60,7 @@ public class LazyBarrierLoader {
     }
 
     // Only process in Overworld
-    if (!world.dimension().equals(net.minecraft.world.Level.OVERWORLD)) {
+    if (!world.dimension().equals(net.minecraft.world.level.Level.OVERWORLD)) {
       return;
     }
 

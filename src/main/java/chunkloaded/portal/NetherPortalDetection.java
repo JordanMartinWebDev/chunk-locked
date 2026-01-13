@@ -65,13 +65,13 @@ public class NetherPortalDetection {
     }
 
     // Verify player is actually in Overworld
-    if (!player.getEntityWorld().dimension().equals(net.minecraft.world.Level.OVERWORLD)) {
+    if (!player.level().dimension().equals(net.minecraft.world.level.Level.OVERWORLD)) {
       LOGGER.warn("onPlayerEnteredOverworld called but player is not in Overworld?");
       return;
     }
 
     // Get the chunk the player is in
-    ChunkPos currentChunk = new ChunkPos(player.getBlockPos());
+    ChunkPos currentChunk = new ChunkPos(player.blockPosition());
 
     LOGGER.info("Player {} exited Nether portal into chunk [{}, {}]",
         player.getUUID(), currentChunk.x, currentChunk.z);
@@ -100,7 +100,7 @@ public class NetherPortalDetection {
 
       // Update barriers around the newly unlocked chunk and adjacent locked chunks
       try {
-        ServerLevel world = (ServerLevel) player.getEntityWorld();
+        ServerLevel world = (ServerLevel) player.level();
         chunkManager.updateBarriersAfterUnlock(world, player.getUUID(), currentChunk);
         LOGGER.info("✓ Updated barriers after unlocking chunk [{}, {}]", currentChunk.x, currentChunk.z);
       } catch (Exception e) {
@@ -108,7 +108,7 @@ public class NetherPortalDetection {
       }
 
       player.sendSystemMessage(
-          net.minecraft.text.Component.literal(
+          net.minecraft.network.chat.Component.literal(
               "§a✓ Chunk auto-unlocked via Nether portal! (Credits remaining: " +
                   chunkManager.getAvailableCredits(player.getUUID()) + ")"),
           false);

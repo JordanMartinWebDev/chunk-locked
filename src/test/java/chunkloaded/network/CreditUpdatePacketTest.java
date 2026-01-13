@@ -165,12 +165,12 @@ public class CreditUpdatePacketTest {
   }
 
   /**
-   * Test packet ID is correctly set.
+   * Test packet type is correctly set.
    */
   @Test
-  void testPacketId_Always_ReturnsCorrectId() {
+  void testPacketType_Always_ReturnsCorrectType() {
     CreditUpdatePacket packet = new CreditUpdatePacket(5, 10);
-    assertEquals(CreditUpdatePacket.ID, packet.getId());
+    assertEquals(CreditUpdatePacket.TYPE, packet.type());
   }
 
   /**

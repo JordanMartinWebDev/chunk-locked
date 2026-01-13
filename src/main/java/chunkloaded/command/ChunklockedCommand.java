@@ -119,7 +119,8 @@ public class ChunklockedCommand {
     var playerData = creditManager.getPlayerData(player.getUUID());
 
     if (playerData == null) {
-      source.sendSuccess(() -> Component.literal("§e" + player.getName().getString() + " has no credit data yet."), false);
+      source.sendSuccess(() -> Component.literal("§e" + player.getName().getString() + " has no credit data yet."),
+          false);
       return 0;
     }
 
@@ -159,7 +160,7 @@ public class ChunklockedCommand {
         playerData.getTotalAdvancementsCompleted());
 
     // Save the changes to persistent storage
-    ChunkUnlockData persistentData = Chunklocked.getData();
+    ChunkUnlockData persistentData = Chunklocked.getPersistentData();
     if (persistentData != null) {
       persistentData.markDirtyAndSave();
     } else {
@@ -199,7 +200,7 @@ public class ChunklockedCommand {
         playerData.getAvailableCredits(),
         playerData.getTotalAdvancementsCompleted());
     // Save the changes to persistent storage
-    ChunkUnlockData persistentData = Chunklocked.getData();
+    ChunkUnlockData persistentData = Chunklocked.getPersistentData();
     if (persistentData != null) {
       persistentData.markDirtyAndSave();
     }
@@ -233,7 +234,7 @@ public class ChunklockedCommand {
         playerData.getTotalAdvancementsCompleted());
 
     // Save the changes
-    ChunkUnlockData persistentData = Chunklocked.getData();
+    ChunkUnlockData persistentData = Chunklocked.getPersistentData();
     if (persistentData != null) {
       persistentData.markDirtyAndSave();
     } else {
@@ -271,7 +272,7 @@ public class ChunklockedCommand {
         playerData.getTotalAdvancementsCompleted());
 
     // Save the changes
-    ChunkUnlockData persistentData = Chunklocked.getData();
+    ChunkUnlockData persistentData = Chunklocked.getPersistentData();
     if (persistentData != null) {
       persistentData.markDirtyAndSave();
     } else {
@@ -351,7 +352,7 @@ public class ChunklockedCommand {
     }
 
     // Force unlock (bypasses adjacency check and credit cost)
-    net.minecraft.server.world.ServerLevel world = context.getSource().getLevel();
+    net.minecraft.server.level.ServerLevel world = context.getSource().getLevel();
     chunkManager.forceUnlockChunk(player.getUUID(), chunk, world);
 
     context.getSource().sendSuccess(() -> Component.literal(
@@ -362,7 +363,7 @@ public class ChunklockedCommand {
     player.sendSystemMessage(Component.literal("§aChunk [" + chunkX + ", " + chunkZ + "] has been unlocked!"));
 
     // Mark data as dirty
-    ChunkUnlockData persistentData = Chunklocked.getData();
+    ChunkUnlockData persistentData = Chunklocked.getPersistentData();
     if (persistentData != null) {
       persistentData.markDirtyAndSave();
     } else {
@@ -427,7 +428,7 @@ public class ChunklockedCommand {
         creditManager.getPlayerData(player.getUUID()).getTotalAdvancementsCompleted());
 
     // Mark data as dirty
-    ChunkUnlockData persistentData2 = Chunklocked.getData();
+    ChunkUnlockData persistentData2 = Chunklocked.getPersistentData();
     if (persistentData2 != null) {
       persistentData2.markDirtyAndSave();
     } else {
@@ -454,10 +455,13 @@ public class ChunklockedCommand {
 
     if (isAdmin) {
       source.sendSuccess(() -> Component.literal("§c§lAdmin Commands:"), false);
-      source.sendSuccess(() -> Component.literal("§e/chunklocked givecredits <amount> §7- Give yourself credits"), false);
+      source.sendSuccess(() -> Component.literal("§e/chunklocked givecredits <amount> §7- Give yourself credits"),
+          false);
       source.sendSuccess(() -> Component.literal("§e/chunklocked credits <player> §7- Show player's credits"), false);
-      source.sendSuccess(() -> Component.literal("§e/chunklocked credits add <player> <amount> §7- Add credits"), false);
-      source.sendSuccess(() -> Component.literal("§e/chunklocked credits set <player> <amount> §7- Set credits"), false);
+      source.sendSuccess(() -> Component.literal("§e/chunklocked credits add <player> <amount> §7- Add credits"),
+          false);
+      source.sendSuccess(() -> Component.literal("§e/chunklocked credits set <player> <amount> §7- Set credits"),
+          false);
       source.sendSuccess(() -> Component.literal("§e/chunklocked listchunks <player> §7- List player's chunks"), false);
       source.sendSuccess(() -> Component.literal("§e/chunklocked forceunlock <player> <x> <z> §7- Force unlock chunk"),
           false);
@@ -481,8 +485,8 @@ public class ChunklockedCommand {
     double eyeZ = player.getZ();
 
     // Get look direction from yaw and pitch
-    float yaw = player.getYaw();
-    float pitch = player.getPitch();
+    float yaw = player.getYRot();
+    float pitch = player.getXRot();
 
     // Convert yaw and pitch to direction vector
     // Minecraft yaw: 0° = South (+Z), 90° = West (-X), 180° = North (-Z), 270° =
@@ -594,7 +598,7 @@ public class ChunklockedCommand {
     }
 
     // Update barriers now that chunk is unlocked
-    net.minecraft.server.world.ServerLevel world = context.getSource().getServer().overworld();
+    net.minecraft.server.level.ServerLevel world = context.getSource().getServer().overworld();
     chunkManager.updateBarriersAfterUnlock(world, player.getUUID(), targetChunk);
 
     // Success feedback
@@ -610,7 +614,7 @@ public class ChunklockedCommand {
         creditManager.getPlayerData(player.getUUID()).getTotalAdvancementsCompleted());
 
     // Mark data as dirty
-    ChunkUnlockData persistentData3 = Chunklocked.getData();
+    ChunkUnlockData persistentData3 = Chunklocked.getPersistentData();
     if (persistentData3 != null) {
       persistentData3.markDirtyAndSave();
     } else {
@@ -666,7 +670,8 @@ public class ChunklockedCommand {
         neighbors.append("W ");
 
       String neighborStr = neighbors.toString().isEmpty() ? "NONE" : neighbors.toString();
-      player.sendSystemMessage(Component.literal("  §7[" + chunk.x + ", " + chunk.z + "] §fbarriers: §e" + neighborStr));
+      player
+          .sendSystemMessage(Component.literal("  §7[" + chunk.x + ", " + chunk.z + "] §fbarriers: §e" + neighborStr));
     }
 
     return 1;
@@ -693,7 +698,8 @@ public class ChunklockedCommand {
     playerData.addCredits(amount);
     int newCredits = playerData.getAvailableCredits();
 
-    player.sendSystemMessage(Component.literal("§aGiven §e" + amount + " §acredits! §7(" + oldCredits + " → " + newCredits + ")"));
+    player.sendSystemMessage(
+        Component.literal("§aGiven §e" + amount + " §acredits! §7(" + oldCredits + " → " + newCredits + ")"));
 
     // Sync updated credits to client
     chunkloaded.advancement.NotificationManager.syncCreditsToClient(
@@ -702,7 +708,7 @@ public class ChunklockedCommand {
         playerData.getTotalAdvancementsCompleted());
 
     // Mark data as dirty
-    ChunkUnlockData persistentData4 = Chunklocked.getData();
+    ChunkUnlockData persistentData4 = Chunklocked.getPersistentData();
     if (persistentData4 != null) {
       persistentData4.markDirtyAndSave();
     } else {
@@ -737,7 +743,8 @@ public class ChunklockedCommand {
     int newCredits = playerData.getAvailableCredits();
 
     targetPlayer
-        .sendSystemMessage(Component.literal("§aGiven §e" + amount + " §acredits! §7(" + oldCredits + " → " + newCredits + ")"));
+        .sendSystemMessage(
+            Component.literal("§aGiven §e" + amount + " §acredits! §7(" + oldCredits + " → " + newCredits + ")"));
     source.sendSuccess(() -> Component.literal("§aGave §e" + amount + " §acredits to §b"
         + targetPlayer.getName().getString() + "§a! §7(" + oldCredits + " → " + newCredits + ")"), false);
 
@@ -748,7 +755,7 @@ public class ChunklockedCommand {
         playerData.getTotalAdvancementsCompleted());
 
     // Mark data as dirty
-    ChunkUnlockData persistentData5 = Chunklocked.getData();
+    ChunkUnlockData persistentData5 = Chunklocked.getPersistentData();
     if (persistentData5 != null) {
       persistentData5.markDirtyAndSave();
     } else {

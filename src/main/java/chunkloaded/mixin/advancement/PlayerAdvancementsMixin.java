@@ -39,7 +39,7 @@ public abstract class PlayerAdvancementsMixin {
    * Shadow field to access the player who owns this advancement tracker.
    */
   @Shadow
-  private ServerPlayer owner;
+  private ServerPlayer player;
 
   /**
    * Shadow method to get the progress for a specific advancement.
@@ -49,10 +49,10 @@ public abstract class PlayerAdvancementsMixin {
    * @return The advancement progress tracker
    */
   @Shadow
-  public abstract AdvancementProgress getProgress(AdvancementHolder advancement);
+  public abstract AdvancementProgress getOrStartProgress(AdvancementHolder advancement);
 
   /**
-   * Inject into grantCriterion to detect advancement completions.
+   * Inject into award to detect advancement completions.
    * <p>
    * This method is called when a player makes progress on an advancement
    * criterion.
@@ -61,25 +61,25 @@ public abstract class PlayerAdvancementsMixin {
    * and the advancement becomes fully done.
    * <p>
    * The method signature:
-   * {@code public boolean grantCriterion(AdvancementHolder advancement, String criterionName)}
+   * {@code public boolean award(AdvancementHolder advancement, String criterionName)}
    *
    * @param advancement   The advancement being progressed
    * @param criterionName The specific criterion that was just granted
    * @param cir           Callback info returnable (contains the return value)
    */
-  @Inject(method = "grantCriterion", at = @At("RETURN"))
+  @Inject(method = "award", at = @At("RETURN"))
   private void onCriterionGranted(
       AdvancementHolder advancement,
       String criterionName,
       CallbackInfoReturnable<Boolean> cir) {
     // Only fire event if the advancement is now complete
     // This prevents firing on partial progress updates
-    AdvancementProgress progress = this.getProgress(advancement);
+    AdvancementProgress progress = this.getOrStartProgress(advancement);
     if (progress.isDone()) {
       // Fire the advancement completed event
-      // The owner field is guaranteed to be a real player (not fake)
+      // The player field is guaranteed to be a real player (not fake)
       AdvancementCompletedCallback.EVENT.invoker().onAdvancementCompleted(
-          this.owner,
+          this.player,
           advancement,
           criterionName);
     }
