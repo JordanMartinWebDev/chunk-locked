@@ -1,5 +1,6 @@
 package chunkloaded.border;
 
+import chunkloaded.Chunklocked;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.server.level.ServerLevel;
@@ -113,7 +114,7 @@ public class BatchBarrierOperations {
     for (BlockPos pos : batch.positions) {
       BlockState existingState = world.getBlockState(pos);
       if (existingState.isAir() || existingState.canBeReplaced()) {
-        world.setBlock(pos, Blocks.BARRIER.defaultBlockState(), 2);
+        world.setBlock(pos, Chunklocked.BARRIER_BLOCK_V2.defaultBlockState(), 2);
       }
     }
 
@@ -142,7 +143,7 @@ public class BatchBarrierOperations {
     // Remove all barriers
     for (BlockPos pos : positions) {
       BlockState state = world.getBlockState(pos);
-      if (state.getBlock() == Blocks.BARRIER) {
+      if (state.is(Chunklocked.BARRIER_BLOCK_V2)) {
         world.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
         affectedChunks.add(new ChunkPos(pos));
       }

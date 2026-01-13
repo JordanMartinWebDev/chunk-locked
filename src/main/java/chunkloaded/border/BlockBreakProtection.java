@@ -3,7 +3,6 @@ package chunkloaded.border;
 import chunkloaded.Chunklocked;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerLevel;
@@ -69,7 +68,7 @@ public class BlockBreakProtection {
     }
 
     // Check what block was broken
-    boolean wasBarrier = state.is(Blocks.BARRIER);
+    boolean wasBarrier = state.is(Chunklocked.BARRIER_BLOCK_V2);
     LOGGER.info("Block broken: {}, wasBarrier={}", state.getBlock(), wasBarrier);
 
     LOGGER.info("Checking if position {} should have a barrier for player {}...", pos, player.getUUID());
@@ -81,7 +80,7 @@ public class BlockBreakProtection {
     if (shouldHave) {
       // Replace the broken block with a barrier immediately
       LOGGER.info("Block broken at barrier boundary {}, replacing with barrier", pos);
-      serverWorld.setBlock(pos, Blocks.BARRIER.defaultBlockState(), 3);
+      serverWorld.setBlock(pos, Chunklocked.BARRIER_BLOCK_V2.defaultBlockState(), 3);
     } else {
       LOGGER.info("Position {} is not a barrier boundary", pos);
     }

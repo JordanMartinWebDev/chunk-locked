@@ -33,24 +33,24 @@ loom {
 
 ### Common Yarn → Mojang Differences
 
-| Yarn Name | Mojang Name |
-|-----------|-------------|
-| `getYaw()` | `getYRot()` |
-| `getPitch()` | `getXRot()` |
-| `player.age` | `player.tickCount` |
-| `getEntityWorld()` | `level()` |
-| `getBlockPos()` | `blockPosition()` |
-| `addStatusEffect()` | `addEffect()` |
-| `hasStatusEffect()` | `hasEffect()` |
-| `removeStatusEffect()` | `removeEffect()` |
-| `sendMessage(text, false)` | `sendSystemMessage(text)` |
-| `ResourceKey.location()` | `ResourceKey.identifier()` |
-| `grantCriterion` | `award` |
-| `getProgress` | `getOrStartProgress` |
-| `owner` (PlayerAdvancements) | `player` |
+| Yarn Name                        | Mojang Name                    |
+| -------------------------------- | ------------------------------ |
+| `getYaw()`                       | `getYRot()`                    |
+| `getPitch()`                     | `getXRot()`                    |
+| `player.age`                     | `player.tickCount`             |
+| `getEntityWorld()`               | `level()`                      |
+| `getBlockPos()`                  | `blockPosition()`              |
+| `addStatusEffect()`              | `addEffect()`                  |
+| `hasStatusEffect()`              | `hasEffect()`                  |
+| `removeStatusEffect()`           | `removeEffect()`               |
+| `sendMessage(text, false)`       | `sendSystemMessage(text)`      |
+| `ResourceKey.location()`         | `ResourceKey.identifier()`     |
+| `grantCriterion`                 | `award`                        |
+| `getProgress`                    | `getOrStartProgress`           |
+| `owner` (PlayerAdvancements)     | `player`                       |
 | `teleportTo(TeleportTransition)` | `teleport(TeleportTransition)` |
-| `getId()` (packets) | `type()` |
-| `ID` (packet constant) | `TYPE` |
+| `getId()` (packets)              | `type()`                       |
+| `ID` (packet constant)           | `TYPE`                         |
 
 ### Block Registration in MC 1.21+
 
