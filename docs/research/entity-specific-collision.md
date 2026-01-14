@@ -1,14 +1,38 @@
 # Entity-Specific Collision Research
 
-**Date**: January 12, 2026  
-**Status**: Research - Not yet implemented  
+**Date**: January 12-13, 2026  
+**Status**: ✅ IMPLEMENTED - January 13, 2026  
 **Goal**: Make BarrierBlockV2 block only players while allowing mobs, items, and fluids to pass through
+
+---
+
+## Implementation Summary
+
+Successfully implemented entity-specific collision in BarrierBlockV2. Mobs can pass through and pathfind through the barriers, while players and ender pearls are blocked. Fluids are completely blocked to prevent exploits.
+
+### Methods Implemented
+
+1. **`getCollisionShape()`** - Entity collision detection (players and ender pearls blocked, mobs/items pass through)
+2. **`getVisualShape()`** - Mob AI pathfinding (empty shape = mobs can pathfind through)
+3. **`canBeReplaced()`** - Prevents fluids from destroying barriers
+
+### Key Learnings
+
+- **Collision alone is not enough**: `getCollisionShape()` only handles physical collision, not AI
+- **Mob AI uses visual shape**: Mobs check `getVisualShape()` for pathfinding, not collision shape
+- **Ender pearl exploit prevention**: Must explicitly block `EntityType.ENDER_PEARL` to prevent teleportation through barriers
+- **EntityType check required**: Ender pearl class name varies, so checking `entity.getType() == EntityType.ENDER_PEARL` is most reliable
+- **Fluids must be fully blocked**: `canBeReplaced()` must return false to prevent water/lava from destroying barriers
+- **Waterlogging limitation**: Minecraft only supports waterlogging with source blocks, not flowing water
+- **No flow-through mechanic**: Minecraft doesn't natively support fluids flowing through solid blocks - blocks must either allow replacement (destroyed) or block fluids entirely
+- **Final decision**: Block fluids completely to prevent player exploits (swimming through water)
 
 ---
 
 ## Overview
 
 We want barrier blocks that:
+
 - **Block players** - solid collision, cannot walk through
 - **Allow mobs** - zombies, skeletons, etc. can walk through
 - **Allow items** - dropped items can pass through
@@ -25,6 +49,7 @@ This would make barriers less intrusive for non-player entities while still prev
 Minecraft uses `getCollisionShape()` to determine if an entity collides with a block. The method receives a `CollisionContext` parameter that can tell us **what** is colliding.
 
 **Key Classes** (Mojang Mappings):
+
 - `VoxelShape` - Defines the collision box shape
 - `CollisionContext` - Abstract context for collision checks
 - `EntityCollisionContext` - Concrete implementation wrapping an `Entity`
@@ -52,23 +77,23 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
  * Semi-transparent barrier block with player-only collision.
- * 
+ *
  * Players are blocked by a full collision box, but mobs, items, and fluids
  * can pass through as if the block doesn't exist.
  */
 public class BarrierBlockV2 extends Block {
-  
+
   // Cache collision shapes
   private static final VoxelShape PLAYER_COLLISION = Shapes.block(); // Full cube
   private static final VoxelShape NO_COLLISION = Shapes.empty();    // Empty shape
-  
+
   public BarrierBlockV2(BlockBehaviour.Properties settings) {
     super(settings);
   }
-  
+
   /**
    * Return collision shape based on what entity is colliding.
-   * 
+   *
    * @param state The block state
    * @param level The world
    * @param pos The block position
@@ -76,22 +101,22 @@ public class BarrierBlockV2 extends Block {
    * @return Full cube for players, empty for everything else
    */
   @Override
-  public VoxelShape getCollisionShape(BlockState state, BlockGetter level, 
+  public VoxelShape getCollisionShape(BlockState state, BlockGetter level,
                                      BlockPos pos, CollisionContext context) {
     // Check if context contains entity information
     if (context instanceof EntityCollisionContext entityContext) {
       Entity entity = entityContext.getEntity();
-      
+
       // Block players with full collision
       if (entity instanceof Player) {
         return PLAYER_COLLISION;
       }
     }
-    
+
     // Everything else passes through (mobs, items, fluids)
     return NO_COLLISION;
   }
-  
+
   // ... rest of existing methods (getShadeBrightness, propagatesSkylightDown, skipRendering)
 }
 ```
@@ -102,13 +127,15 @@ public class BarrierBlockV2 extends Block {
 
 ### Collision Shape Checking
 
-1. **Player approaches barrier**: 
+1. **Player approaches barrier**:
+
    - `getCollisionShape()` called with `EntityCollisionContext` wrapping the player
    - Method detects `entity instanceof Player`
    - Returns `PLAYER_COLLISION` (full cube)
    - Player is blocked
 
 2. **Zombie approaches barrier**:
+
    - `getCollisionShape()` called with `EntityCollisionContext` wrapping the zombie
    - Method checks entity type, not a player
    - Returns `NO_COLLISION` (empty shape)
@@ -123,6 +150,7 @@ public class BarrierBlockV2 extends Block {
 ### Visual Shape vs Collision Shape
 
 **Important distinction**:
+
 - `getShape()` - Visual outline and selection box (what you see)
 - `getCollisionShape()` - Physical collision (what you bump into)
 
@@ -135,21 +163,25 @@ We only override collision shape. The block still appears as a full cube visuall
 Minecraft has several blocks with entity-specific collision:
 
 ### Powder Snow (`PowderSnowBlock`)
+
 - Players and some mobs fall through (unless wearing leather boots)
 - Other entities walk on top
 - Fluids cannot flow through
 
 ### Scaffolding (`ScaffoldingBlock`)
+
 - Players can climb up/down inside
 - Mobs walk on top surface
 - Different collision shapes based on context
 
 ### Cobweb (`WebBlock`)
+
 - Slows entities inside
 - No solid collision, but movement penalty
 - Fluids flow through
 
 ### Structure Void (`StructureVoidBlock`)
+
 - No collision at all
 - Used for structure generation templates
 
@@ -160,21 +192,25 @@ Minecraft has several blocks with entity-specific collision:
 ### Manual Tests to Perform
 
 1. **Player Collision**
+
    - Walk into barrier as player → should be blocked
    - Try jumping over → should collide
    - Try sneaking through → should collide
 
 2. **Mob Behavior**
+
    - Spawn zombie near barrier → should walk through
    - Lead passive mob through → should pass
    - Check if mobs pathfind through barriers correctly
 
 3. **Fluid Flow**
+
    - Place water source next to barrier → should flow through
    - Place lava next to barrier → should flow through
    - Check if fluids stop at proper boundaries
 
 4. **Item Drops**
+
    - Drop items on one side → should pass through to other side
    - Test with flowing water pushing items
 
@@ -203,7 +239,7 @@ Minecraft has several blocks with entity-specific collision:
 
 **Problem**: Player on a boat might pass through if boat's collision is checked instead of player's.
 
-**Solution**: Check if player is *controlling* the entity and block accordingly.
+**Solution**: Check if player is _controlling_ the entity and block accordingly.
 
 ```java
 if (entity instanceof Player) {
@@ -232,21 +268,25 @@ if (entity.getControllingPassenger() instanceof Player) {
 ## Implementation Plan
 
 ### Phase 1: Basic Implementation
+
 - [ ] Add `getCollisionShape()` override to `BarrierBlockV2`
 - [ ] Add required imports (`VoxelShape`, `Shapes`, `EntityCollisionContext`)
 - [ ] Compile and test basic player collision
 
 ### Phase 2: Refinement
+
 - [ ] Handle player-controlled entities (boats, minecarts)
 - [ ] Test with various mob types
 - [ ] Verify fluid flow works correctly
 
 ### Phase 3: Testing
+
 - [ ] Complete all manual test cases
 - [ ] Document any unexpected behaviors
 - [ ] Create test world for demonstrations
 
 ### Phase 4: Documentation
+
 - [ ] Update `BarrierBlockV2` Javadoc
 - [ ] Add manual test cases to `manual-tests/`
 - [ ] Update `Documentation/CoreSystems/` with collision behavior
@@ -286,17 +326,23 @@ Performance impact should be negligible.
 ## Alternatives Considered
 
 ### 1. Entity Spawn Prevention
+
 Instead of collision, just prevent mobs from spawning in locked chunks.
+
 - **Pro**: Simpler implementation
 - **Con**: Doesn't handle mobs wandering in from adjacent chunks
 
 ### 2. Damage/Teleport System
+
 Allow entities through but damage/teleport players.
+
 - **Pro**: More lenient barrier
 - **Con**: Less intuitive, requires teleportation logic
 
 ### 3. Per-Entity-Type Configuration
+
 Check entity registry and have whitelist/blacklist.
+
 - **Pro**: Maximum flexibility
 - **Con**: Complex configuration, harder to maintain
 
@@ -307,6 +353,7 @@ Check entity registry and have whitelist/blacklist.
 ## References
 
 ### Mojang Mapping Classes
+
 - `net.minecraft.world.phys.shapes.VoxelShape`
 - `net.minecraft.world.phys.shapes.Shapes`
 - `net.minecraft.world.phys.shapes.CollisionContext`
@@ -315,6 +362,7 @@ Check entity registry and have whitelist/blacklist.
 - `net.minecraft.world.entity.player.Player`
 
 ### Vanilla Block Examples
+
 - `PowderSnowBlock` - Player-specific collision
 - `ScaffoldingBlock` - Context-dependent shapes
 - `WebBlock` - Movement effects without solid collision

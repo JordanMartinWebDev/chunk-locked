@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "chunkloaded.mixin.client",
+	"package": "chunklocked.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"ExampleClientMixin"

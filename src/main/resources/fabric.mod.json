@@ -16,13 +16,13 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"chunkloaded.Chunklocked"
+			"chunklocked.Chunklocked"
 		],
 		"client": [
-			"chunkloaded.ChunklockedClient"
+			"chunklocked.ChunklockedClient"
 		],
 		"fabric-datagen": [
-			"chunkloaded.ChunklockedDataGenerator"
+			"chunklocked.ChunklockedDataGenerator"
 		]
 	},
 	"mixins": [

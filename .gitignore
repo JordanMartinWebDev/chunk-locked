@@ -33,6 +33,12 @@ classes/
 run/
 logs/
 
+# Loom remapped sources (build artifacts - should not be committed)
+remappedSrc/
+remappedClientSrc/
+/chunklocked/
+/com/
+
 # Project documentation (research artifacts)
 docs/
 

@@ -347,6 +347,92 @@
         ]
     },
     {
+        "id": "chunkaccesscontrol",
+        "title": "Chunk Access Control",
+        "tests": [
+            {
+                "id": "ChunkAccessControl-1",
+                "title": "Basic Chunk Access Check",
+                "prerequisites": "",
+                "steps": "",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkAccessControl-2",
+                "title": "Adjacency Detection",
+                "prerequisites": "",
+                "steps": "",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkAccessControl-3",
+                "title": "Multi-Player Isolation",
+                "prerequisites": "",
+                "steps": "",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkAccessControl-4",
+                "title": "Performance Test - 1000 Chunks",
+                "prerequisites": "",
+                "steps": "",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkAccessControl-5",
+                "title": "Negative Coordinates",
+                "prerequisites": "",
+                "steps": "",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkAccessControl-6",
+                "title": "Chunk Unlock Validation",
+                "prerequisites": "",
+                "steps": "",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkAccessControl-7",
+                "title": "Initial Spawn Setup (First Chunk)",
+                "prerequisites": "",
+                "steps": "",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkAccessControl-8",
+                "title": "Frontier Calculation",
+                "prerequisites": "",
+                "steps": "",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkAccessControl-9",
+                "title": "Save/Load Persistence",
+                "prerequisites": "",
+                "steps": "",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkAccessControl-10",
+                "title": "Rapid Movement Stress Test",
+                "prerequisites": "",
+                "steps": "",
+                "expected": "",
+                "edgeCases": ""
+            }
+        ]
+    },
+    {
         "id": "chunkstorageandmanagement",
         "title": "Chunk Storage and Management",
         "tests": [
@@ -429,6 +515,124 @@
                 "steps": "Unlock 1000 chunks in a grid pattern\nMeasure time to save world (should be <100ms)\nReload world\nMeasure time to load chunk data (should be <100ms)\nQuery if specific chunk is unlocked (should be instant)\nList all unlocked chunks (should be <50ms)",
                 "expected": "O(1) lookup performance maintained\nSave/load times remain reasonable\nNo memory leaks\nUI remains responsive\n**Performance Targets**:\nChunk lookup: <1ms\nSave operation: <100ms for 1000 chunks\nLoad operation: <100ms for 1000 chunks\nMemory usage: <10MB for 10,000 chunks\n---\n## Testing Checklist\n[ ] Test Case 1: Basic Operations\n[ ] Test Case 2: Player Isolation\n[ ] Test Case 3: Persistence\n[ ] Test Case 4: API Integration\n[ ] Test Case 5: Area Detection\n[ ] Test Case 6: Negative Coordinates\n[ ] Test Case 7: Credit Edge Cases\n[ ] Test Case 8: NBT Serialization\n[ ] Test Case 9: Multiplayer\n[ ] Test Case 10: Performance\n---\n## Known Limitations\nChunkPos requires Minecraft runtime - cannot unit test\nArea detection requires actual BFS traversal in live environment\nNBT serialization needs file system access\nMultiplayer scenarios need actual server environment\n## Future: Integration Test Framework\nConsider implementing Fabric Game Tests for automated testing:\nhttps://fabricmc.net/wiki/tutorial:testing\nRequires Minecraft test harness setup\nCan run in-game automated test scenarios\nProvides reproducible test environment",
                 "edgeCases": ""
+            }
+        ]
+    },
+    {
+        "id": "chunkunlockingcommands",
+        "title": "Chunk Unlocking Commands",
+        "tests": [
+            {
+                "id": "ChunkUnlockingCommands-1",
+                "title": "Give Credits to Self",
+                "prerequisites": "Fresh world with player joined\nPlayer has 0 credits initially\nPlayer has non-zero credits",
+                "steps": "Run `/chunklocked givecredits 5`\nCheck inventory or run `/chunklocked credits`\nVerify credit count shows 5\nRun `/chunklocked credits reset`\nRun `/chunklocked credits`",
+                "expected": "Chat shows: \"Given 5 credits (0 → 5)\"\nCredits increase by 5\nCan unlock chunks with new credits\nChat shows: \"Reset your credits to 0\"\nCredits display shows 0\n---",
+                "edgeCases": "Give 0 credits: Should be rejected (requires 1+)\nGive negative credits: Should be rejected\nGive huge amount (999): Should work without error\n---\n## Test Case 1b: Reset Credits (Self)\n**Objective**: Verify `/chunklocked credits reset` sets credits to 0 for the executing player."
+            },
+            {
+                "id": "ChunkUnlockingCommands-2",
+                "title": "Give Credits to Another Player",
+                "prerequisites": "2 players online (Player A as executor, Player B as target)\nPlayer B has 0 credits\nTwo players online; target has non-zero credits",
+                "steps": "As Player A, run `/chunklocked givecredits Player B 3`\nCheck Player B's credits\nVerify both players see feedback messages\nAs admin, run `/chunklocked credits reset <player>`\nTarget runs `/chunklocked credits`",
+                "expected": "Player A sees: \"Gave 3 credits to Player B (0 → 3)\"\nPlayer B receives chat message: \"You received 3 credits (0 → 3)\"\nPlayer B can unlock chunks with new credits\nAdmin sees: \"Reset <player>'s credits to 0\"\nTarget sees: \"Your credits were reset to 0\"\nTarget’s credits display shows 0\n---",
+                "edgeCases": "Non-existent player name: Should show error\nOffline player: Should show error\nExecutor is not OP: Should be denied (admin command)\n---\n## Test Case 2b: Reset Credits (Other Player)\n**Objective**: Verify `/chunklocked credits reset <player>` sets credits to 0 for the target player."
+            },
+            {
+                "id": "ChunkUnlockingCommands-3",
+                "title": "Unlock Chunk Facing - North Direction",
+                "prerequisites": "2x2 spawn area unlocked (4 chunks)\nPlayer has at least 1 credit\nChunks to north are locked",
+                "steps": "Face directly north (yaw = 180°)\nRun `/chunklocked unlockfacing`\nLook at the world to verify\nCheck barriers are gone from that direction",
+                "expected": "Chat shows: \"Unlocked chunk North [X, Z-1]!\"\nBarrier blocks disappear from that direction\nCan move freely into the new chunk\nAdjacent locked chunks still have barriers",
+                "edgeCases": "Look slightly up (60° pitch): Should still detect north boundary\nLook slightly down (-60° pitch): Should still detect north boundary\nLook too steeply (90° pitch straight up): Should fail gracefully\n---"
+            },
+            {
+                "id": "ChunkUnlockingCommands-4",
+                "title": "Unlock Chunk Facing - South Direction",
+                "prerequisites": "2x2 spawn area unlocked\nPlayer has at least 1 credit\nChunks to south are locked",
+                "steps": "Face directly south (yaw = 0°)\nRun `/chunklocked unlockfacing`\nVerify correct direction detected\nCheck barriers are gone",
+                "expected": "Chat shows: \"Unlocked chunk South [X, Z+1]!\"\nBarriers removed from south side\nNew chunk accessible\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkUnlockingCommands-5",
+                "title": "Unlock Chunk Facing - East Direction",
+                "prerequisites": "2x2 spawn area unlocked\nPlayer has at least 1 credit\nChunks to east are locked",
+                "steps": "Face directly east (yaw = 270°)\nRun `/chunklocked unlockfacing`\nVerify chunk east is unlocked",
+                "expected": "Chat shows: \"Unlocked chunk East [X+1, Z]!\"\nBarriers removed from east side\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkUnlockingCommands-6",
+                "title": "Unlock Chunk Facing - West Direction",
+                "prerequisites": "2x2 spawn area unlocked\nPlayer has at least 1 credit\nChunks to west are locked",
+                "steps": "Face directly west (yaw = 90°)\nRun `/chunklocked unlockfacing`\nVerify chunk west is unlocked",
+                "expected": "Chat shows: \"Unlocked chunk West [X-1, Z]!\"\nBarriers removed from west side\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkUnlockingCommands-7",
+                "title": "Unlock Multiple Chunks in Same Direction",
+                "prerequisites": "2x2 spawn area unlocked: [7,-1], [8,-1], [7,0], [8,0]\nPlayer has 2+ credits\nUnlock one more chunk north: [7,-2]\nNow there are chunks at [7,-2] (locked), [7,-3] (still locked)",
+                "steps": "Face north from the 2x2 area\nRun `/chunklocked unlockfacing`\nFirst unlock should target [7,-2]\nRun again, should target [7,-3]",
+                "expected": "First unlock: \"Unlocked chunk North [7, -2]!\"\nBarriers between [7,-1] and [7,-2] disappear\nSecond unlock: \"Unlocked chunk North [7, -3]!\"\nBarriers between [7,-2] and [7,-3] disappear\nNo double-unlocking of already-unlocked chunks",
+                "edgeCases": "Skip internal boundaries: ✅ Raycasting should skip boundaries between [7,-1] and [7,-2] if both are unlocked\nDetect first locked boundary: ✅ Should stop at first locked chunk encountered\n---"
+            },
+            {
+                "id": "ChunkUnlockingCommands-8",
+                "title": "Cannot Unlock Already-Unlocked Chunk",
+                "prerequisites": "Chunk [7,-2] is already unlocked\nPlayer facing that direction",
+                "steps": "Face north toward [7,-2]\nRun `/chunklocked unlockfacing`",
+                "expected": "Chat shows: \"The chunk North of you [7, -2] is already unlocked!\"\nNo credit spent\nNo barriers changed\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkUnlockingCommands-9",
+                "title": "Cannot Unlock Without Credits",
+                "prerequisites": "Player has 0 credits\nLocked chunks available",
+                "steps": "Face a locked chunk direction\nRun `/chunklocked unlockfacing`",
+                "expected": "Chat shows: \"Not enough credits! Complete more advancements.\"\nNo chunk unlocked\nNo barriers changed\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkUnlockingCommands-10",
+                "title": "Raycasting Range",
+                "prerequisites": "Locked chunks far away (100+ blocks)\nPlayer has credits",
+                "steps": "Build to 200 blocks away from locked chunk\nFace the locked chunk\nRun `/chunklocked unlockfacing`",
+                "expected": "Should successfully detect and unlock the distant chunk\nWorks up to 256 blocks",
+                "edgeCases": "257 blocks away: Should fail (\"No locked chunk boundary found\")\nBlocked line of sight (solid blocks): Ray should still work (not blocked by obstacles)\n---"
+            },
+            {
+                "id": "ChunkUnlockingCommands-11",
+                "title": "Barrier Persistence",
+                "prerequisites": "2x2 spawn area with frontier barriers\nServer restarted",
+                "steps": "Check barriers are still present after reload\nTry to move into locked chunk\nVerify barriers block movement",
+                "expected": "Barriers are restored on server load\nCannot move past barriers\nChunks remain locked until explicitly unlocked\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkUnlockingCommands-12",
+                "title": "Barrier Update After Unlock",
+                "prerequisites": "Two adjacent locked chunks: [7,-2] (north) and [8,-1] (east of spawn)\nBarriers on all sides initially",
+                "steps": "Unlock [7,-2] to the north\nCheck barrier walls update\nNorth barrier from [7,-1] disappears\nSouth barrier from [7,-2] appears (facing the 2x2)\nUnlock [8,-1] to the east\nVerify that chunk's barriers update",
+                "expected": "Barriers removed from unlocked chunks\nBarriers remain on locked chunks\nFrontier barrier configuration updates correctly\nNo barriers between two unlocked chunks\nBarriers only on edges bordering locked areas\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkUnlockingCommands-13",
+                "title": "Unlock from Inside vs Outside",
+                "prerequisites": "2x2 spawn area\n3 credits available",
+                "steps": "Stand in center of 2x2 area\nFace east and unlock chunk east\nMove into newly unlocked chunk\nFace east again and unlock next chunk\nVerify all directions work",
+                "expected": "Unlocking works regardless of position\nBarriers update correctly each time\nCan walk into newly unlocked areas\n---\n## Summary of Commands Tested\n```\n# Give self credits\n/chunklocked givecredits 5\n# Give other player credits\n/chunklocked givecredits Player205 3\n# Unlock chunk in facing direction\n/chunklocked unlockfacing\n# Check barrier configuration\n/chunklocked debugbarriers\n# Check own credits\n/chunklocked credits\n```\n## Known Limitations\nRaycasting doesn't respect block line-of-sight (barriers are invisible, so this is correct)\nMaximum range is 256 blocks\nMust face surface of chunk boundary (not corner)\nOnly works in Overworld (by design)\nOnly works in Overworld (by design)\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "ChunkUnlockingCommands-14",
+                "title": "Credit Persistence After Admin Grants",
+                "prerequisites": "Server running and player online\nPlayer initially has 0 credits",
+                "steps": "As admin, run `/chunklocked givecredits <player> 3`.\nAs player, run `/chunklocked credits` and note value (should be 3).\nSave and exit to title; stop the server.\nRestart the server and rejoin with the same player.\nRun `/chunklocked credits` again.",
+                "expected": "The credited amount persists across restart (value remains 3).",
+                "edgeCases": "Use `/chunklocked addcredits <amount>` and `/chunklocked setcredits <amount>` and repeat steps; values should persist.\nIf credits are granted before `SERVER_STARTED`, check logs for warning about `persistentData` being null; there should be no crash."
             }
         ]
     },
@@ -519,6 +723,116 @@
         ]
     },
     {
+        "id": "entityspecificcollision",
+        "title": "Entity-Specific Collision",
+        "tests": [
+            {
+                "id": "EntitySpecificCollision-1",
+                "title": "Player Collision",
+                "prerequisites": "Place BarrierBlockV2 blocks in creative mode\nSwitch to survival mode for realistic testing",
+                "steps": "Place a 3x3 wall of BarrierBlockV2 blocks\nAttempt to walk through the barrier\nTry jumping over while approaching\nTry sneaking through\nTry sprinting into the barrier",
+                "expected": "Player is completely blocked by the barrier in all cases\nPlayer cannot pass through from any direction\nCollision feels solid like a normal block",
+                "edgeCases": "Try from different angles (north, south, east, west)\nTry at chunk boundaries\nTest at different Y-levels (ground, mid-air, underground)\n---"
+            },
+            {
+                "id": "EntitySpecificCollision-2",
+                "title": "Hostile Mob Pass-Through",
+                "prerequisites": "Barrier wall setup\nSpawn hostile mobs (zombie, skeleton, creeper)",
+                "steps": "Place barrier wall between player and open area\nSpawn zombie on opposite side of barrier\nMove close enough to aggro the zombie\nObserve if zombie walks through barrier toward player",
+                "expected": "Zombie walks through barrier blocks as if they don't exist\nZombie pathfinding treats barriers as passable\nZombie can attack player through barrier if in range",
+                "edgeCases": "Test with different mob types: skeleton, creeper, spider, enderman\nTest with baby zombies\nTest with zombified piglins from Nether\n---"
+            },
+            {
+                "id": "EntitySpecificCollision-3",
+                "title": "Passive Mob Pass-Through",
+                "prerequisites": "Barrier wall setup\nPassive mobs (cow, sheep, pig, chicken)",
+                "steps": "Spawn passive mob on one side of barrier\nUse wheat/seeds to lure mob toward player through barrier\nPush mob manually through barrier\nObserve mob wandering behavior near barriers",
+                "expected": "Passive mobs can walk through barriers\nMobs do not get stuck on barriers\nPathfinding treats barriers as passable",
+                "edgeCases": "Test with different animals\nTest leading with leash through barrier\nTest baby animals vs adults\n---"
+            },
+            {
+                "id": "EntitySpecificCollision-4",
+                "title": "Item Drop Pass-Through",
+                "prerequisites": "Barrier wall setup\nVarious items (dirt, diamonds, tools)",
+                "steps": "Stand on one side of barrier wall\nThrow items toward the barrier\nDrop items directly on top of barrier\nPlace items on ground and push toward barrier using water",
+                "expected": "Items pass through barrier blocks\nItems do not get stuck or bounce back\nItems can be picked up from other side",
+                "edgeCases": "Test with stacked items (64 cobblestone)\nTest with unstackable items (tools, armor)\nTest with items in flowing water\n---"
+            },
+            {
+                "id": "EntitySpecificCollision-5",
+                "title": "Fluid Flow Through Barriers",
+                "prerequisites": "Barrier wall with gaps\nWater bucket and lava bucket",
+                "steps": "Create a vertical barrier wall 3 blocks high\nPlace water source block above barrier\nObserve if water flows through barrier\nRepeat with lava",
+                "expected": "Water flows through barrier blocks\nLava flows through barrier blocks\nFluids treat barriers as air blocks\nFluid mechanics remain normal (no infinite sources)",
+                "edgeCases": "Test with waterlogged blocks near barriers\nTest underwater placement of barriers\nTest if barriers can be waterlogged (they shouldn't be)\n---"
+            },
+            {
+                "id": "EntitySpecificCollision-6",
+                "title": "Projectile Pass-Through",
+                "prerequisites": "Barrier wall setup\nBow and arrows, snowballs, eggs, ender pearls",
+                "steps": "Stand in front of barrier wall\nShoot arrow at barrier\nThrow snowball at barrier\nThrow egg at barrier\nThrow ender pearl through barrier",
+                "expected": "Arrows pass through barriers\nSnowballs pass through barriers\nEggs pass through barriers\nEnder pearls pass through and teleport player",
+                "edgeCases": "Test with tipped arrows\nTest with spectral arrows\nTest tridents (thrown)\nTest fishing rod bobber\n---"
+            },
+            {
+                "id": "EntitySpecificCollision-7",
+                "title": "Player-Controlled Entity Blocking",
+                "prerequisites": "Barrier wall setup\nBoat, minecart, horse (tamed)",
+                "steps": "Place boat near barrier\nEnter boat\nAttempt to move through barrier while in boat\nExit boat, move boat through barrier manually\nRepeat with minecart on rails\nRepeat with mounted horse",
+                "expected": "Player CANNOT pass through barrier while in boat\nPlayer CANNOT pass through barrier while in minecart\nPlayer CANNOT pass through barrier while riding horse\nEmpty boat/minecart CAN pass through barrier\nRiderless horse CAN walk through barrier",
+                "edgeCases": "Test with pig (saddle and carrot on stick)\nTest with strider in Nether\nTest with player as passenger (not controller)\n---"
+            },
+            {
+                "id": "EntitySpecificCollision-8",
+                "title": "Redstone and Mechanisms",
+                "prerequisites": "Barrier wall\nRedstone dust, repeaters, pistons",
+                "steps": "Place redstone dust on/near barriers\nTest redstone signal through barriers\nPlace piston facing barrier, activate it\nPlace piston behind barrier, try to push block through",
+                "expected": "Redstone can be placed adjacent to barriers\nRedstone signals do NOT pass through barriers (expected)\nPistons cannot push barriers (unbreakable)\nPistons CAN push other blocks through barriers (if collision allows)",
+                "edgeCases": "Test with observers facing barriers\nTest with slime block flying machines\n---"
+            },
+            {
+                "id": "EntitySpecificCollision-9",
+                "title": "Multiplayer Behavior",
+                "prerequisites": "Multiplayer server or LAN world\nTwo players",
+                "steps": "Player 1 places barrier wall\nPlayer 2 attempts to walk through barrier\nPlayer 1 observes Player 2's collision\nTest with both players on opposite sides",
+                "expected": "Both players see consistent collision behavior\nNo desync between client and server\nOther player appears blocked at barrier",
+                "edgeCases": "Test with high latency\nTest with player pushing another player toward barrier\nTest with knockback effects (explosions, knockback enchantment)\n---"
+            },
+            {
+                "id": "EntitySpecificCollision-10",
+                "title": "Dimension Behavior",
+                "prerequisites": "Barriers in Overworld, Nether, and End\nAccess to all dimensions",
+                "steps": "Place barrier in Overworld, test collision\nPlace barrier in Nether, test collision\nPlace barrier in End, test collision\nTest mob behavior in each dimension",
+                "expected": "Collision behavior is consistent across all dimensions\nWorks identically in Overworld, Nether, and End",
+                "edgeCases": "Test with dimension-specific mobs (piglins, endermen)\nTest with ghast fireballs passing through barriers\n---"
+            },
+            {
+                "id": "EntitySpecificCollision-11",
+                "title": "Light Transmission",
+                "prerequisites": "Barrier wall in dark area\nLight source (torch, glowstone)",
+                "steps": "Place barrier wall in underground cave\nPlace torch on one side of barrier\nObserve light levels on opposite side",
+                "expected": "Light passes through barriers (transparency already tested)\nSkylight propagates through barriers\nLight level matches as if barrier were air",
+                "edgeCases": "Test with barrier at surface (skylight)\nTest with multiple stacked barriers vertically\n---"
+            },
+            {
+                "id": "EntitySpecificCollision-12",
+                "title": "Performance with Many Barriers",
+                "prerequisites": "Large area with many barriers\nF3 debug screen open",
+                "steps": "Place 100+ barrier blocks in a large structure\nSpawn 50+ mobs nearby\nDrop 100+ items near barriers\nObserve FPS and TPS",
+                "expected": "No significant performance degradation\nCollision checks remain fast (using cached VoxelShapes)\nFPS/TPS remain stable",
+                "edgeCases": "Test with thousands of entities\nTest with rapid collision checks (sprinting back and forth)\n---"
+            },
+            {
+                "id": "EntitySpecificCollision-13",
+                "title": "Creative Mode Interaction",
+                "prerequisites": "Creative mode enabled\nBarriers placed",
+                "steps": "In creative mode, attempt to break barrier\nTry to place blocks inside barrier space\nTry flying through barriers",
+                "expected": "Creative mode players can break barriers (as intended)\nPlayers still collide with barriers (no flying through)\nBarrier functionality same as survival",
+                "edgeCases": "Test spectator mode (should pass through)\nTest with commands (/tp through barriers)\n---\n## Known Limitations\n**Pathfinding**: Mobs may not pathfind optimally through barriers (AI treats them as obstacles despite being passable)\n**Ender Pearl Edge Case**: Player might teleport to other side, but this is expected behavior\n**Spectator Mode**: Not tested, but spectator mode should pass through all blocks anyway\n---\n## Regression Tests\nEnsure old functionality still works:\n[ ] Barriers still have semi-transparent appearance\n[ ] Barriers are still unbreakable in survival\n[ ] Barriers still have correct texture\n[ ] Light still passes through barriers\n[ ] Barriers can still be placed/broken in creative\n---\n## Test Environment Setup\n### Quick Test World Setup\n```\nCreate new creative world\nRun: /gamemode creative\nObtain BarrierBlockV2 blocks (creative inventory)\nBuild test arena:\n10x10 enclosed area\nBarrier walls on sides\nSpawn platform for mobs\nWater test area\nSwitch to survival: /gamemode survival\nBegin test cases\n```\n### Recommended Commands\n```mcfunction\n# Give barriers\n/give @p chunk-locked:barrier_block 64\n# Spawn test mobs\n/summon minecraft:zombie ~ ~ ~5\n/summon minecraft:skeleton ~ ~ ~-5\n/summon minecraft:cow ~ ~ ~3\n# Clear mobs after testing\n/kill @e[type=!player]\n# Set time (for visibility)\n/time set day\n```\n---\n## Test Results Template\n| Test Case                     | Pass/Fail | Notes |\n| ----------------------------- | --------- | ----- |\n| 1. Player Collision           | ⬜        |       |\n| 2. Hostile Mob Pass-Through   | ⬜        |       |\n| 3. Passive Mob Pass-Through   | ⬜        |       |\n| 4. Item Drop Pass-Through     | ⬜        |       |\n| 5. Fluid Flow                 | ⬜        |       |\n| 6. Projectile Pass-Through    | ⬜        |       |\n| 7. Player-Controlled Entities | ⬜        |       |\n| 8. Redstone Mechanisms        | ⬜        |       |\n| 9. Multiplayer Behavior       | ⬜        |       |\n| 10. Dimension Behavior        | ⬜        |       |\n| 11. Light Transmission        | ⬜        |       |\n| 12. Performance               | ⬜        |       |\n| 13. Creative Mode             | ⬜        |       |\n---\n## Testing Priority\n**High Priority** (Core Functionality):\nTest Case 1: Player Collision\nTest Case 2: Hostile Mob Pass-Through\nTest Case 4: Item Drop Pass-Through\nTest Case 5: Fluid Flow\n**Medium Priority** (Important Edge Cases):\nTest Case 7: Player-Controlled Entities\nTest Case 9: Multiplayer Behavior\nTest Case 13: Creative Mode\n**Low Priority** (Nice to Have):\nTest Case 8: Redstone\nTest Case 10: Dimensions\nTest Case 12: Performance\n---\n**Test Completion**: Date: ****\\_\\_\\_****\n**Tester**: ****\\_\\_\\_****\n**Version**: ****\\_\\_\\_****\n**Result**: ⬜ All Pass | ⬜ Some Fail | ⬜ Major Issues"
+            }
+        ]
+    },
+    {
         "id": "networksynchronization",
         "title": "Network Synchronization & Client Display",
         "tests": [
@@ -601,6 +915,334 @@
                 "steps": "Complete advancement and check notification message\nCheck credit display formatting\nVerify advancement names display correctly\nCheck all error messages are readable\nTest with non-English locale if available",
                 "expected": "All notification messages display correctly\nNo placeholder text visible to player\nNumbers format according to locale\nAdvancement names visible and accurate\nError messages are clear and helpful",
                 "edgeCases": "Very long advancement names\nAdvancement names with special characters\nMultiple line messages\nRTL (right-to-left) languages (if supported)\n---\n## Known Limitations and Assumptions\n**Network Reliability**: Assumes reasonably reliable network connection. Packet loss may cause temporary desync.\n**Thread Safety**: Credit sync assumes server thread execution for all modifications.\n**Packet Order**: Relies on Minecraft's packet delivery order guarantee.\n**Multiplayer**: Tested with local multiplayer and online servers.\n---\n## Debug Commands (if implemented)\n`/chunklocked credits` - Display current player credits\n`/chunklocked info <player>` - Admin command to view player's credit data\n`/chunklocked reload` - Reload configuration\n---\n## Troubleshooting\n**Credits not syncing after advancement**:\nCheck that advancement completion is detected (look for log messages)\nVerify NotificationManager.syncCreditsToClient() is being called\nCheck that ServerPlayNetworking is properly configured\nVerify client packet handler is registered\n**Client shows zero credits after login**:\nCheck player data on server (if available)\nVerify ChunkUnlockData is loaded correctly\nCheck that initial sync packet is sent on player join\nLook for exceptions in packet sending\n**Crashes during sync**:\nCheck for integer overflow in credit calculations\nVerify packet encoding doesn't exceed buffer size\nLook for null pointer exceptions in packet data\nCheck JVM memory isn't exhausted\n**Performance degradation**:\nMonitor packet frequency (should be 1-2 per advancement)\nCheck for packet send loops (unbounded iteration)\nVerify client packet handler doesn't block main thread\nProfile CPU usage on both sides\n---\n## Test Sign-Off\n[ ] All test cases passed\n[ ] No critical errors found\n[ ] Performance is acceptable\n[ ] Multiplayer functionality verified\n[ ] Ready for public release\n**Tester**: **\\*\\*\\*\\***\\_**\\*\\*\\*\\***\n**Date**: **\\*\\*\\*\\***\\_**\\*\\*\\*\\***\n**Notes**: **\\*\\*\\*\\***\\_**\\*\\*\\*\\***"
+            }
+        ]
+    },
+    {
+        "id": "nonplayerblockremoval",
+        "title": "Non-Player Block Removal",
+        "tests": [
+            {
+                "id": "NonPlayerBlockRemoval-1",
+                "title": "Leaf Decay",
+                "prerequisites": "",
+                "steps": "Locate a barrier wall between locked/unlocked chunks\nPlace oak or birch leaves against the barrier (at Y=70-100 for visibility)\nEnsure leaves are close to logs or other leaves (within 6 blocks) so they don't immediately decay\nRemove all nearby logs/leaves to trigger decay timer\nWait 20-40 seconds for leaves to decay",
+                "expected": "Leaves decay naturally\nIf leaves were placed ON barrier blocks, barrier blocks should immediately reappear after decay\nNo holes should remain in the barrier wall\nServer log should show: \"Non-player block removal detected at barrier boundary [pos], replacing with barrier\"",
+                "edgeCases": "Leaves at different Y levels (ground level, tree height, sky limit)\nMultiple leaf blocks decaying simultaneously\nLeaves on corners of chunk boundaries\n---"
+            },
+            {
+                "id": "NonPlayerBlockRemoval-2",
+                "title": "TNT Explosions",
+                "prerequisites": "",
+                "steps": "Locate a barrier wall\nStand in the unlocked chunk\nPlace TNT 2-3 blocks from the barrier wall\nIgnite TNT with flint and steel\nObserve the explosion",
+                "expected": "TNT explodes and destroys surrounding terrain\nBarrier blocks destroyed by explosion are immediately replaced\nNo holes remain in the barrier wall after explosion\nNormal terrain blocks are destroyed as expected\nServer log shows barrier replacement messages",
+                "edgeCases": "Multiple TNT explosions in quick succession\nTNT minecarts\nCreeper explosions\nEnd crystal explosions\nBed explosions in Nether (if barrier walls exist there)\n---"
+            },
+            {
+                "id": "NonPlayerBlockRemoval-3",
+                "title": "Fire Burning Blocks",
+                "prerequisites": "",
+                "steps": "Locate barrier wall between locked/unlocked chunks\nPlace wooden planks on top of barrier blocks\nUse flint and steel to ignite the wood\nWait for fire to spread and consume the wood\nCheck if barriers remain intact",
+                "expected": "Wood burns away\nIf wood was placed on barrier blocks, barriers should reappear\nNo holes in barrier wall\nFire does not spread through barriers",
+                "edgeCases": "Lava flow onto barriers\nLightning striking barriers\nFlint and steel used directly on barriers (should not place fire)\n---"
+            },
+            {
+                "id": "NonPlayerBlockRemoval-4",
+                "title": "Water/Lava Flow",
+                "prerequisites": "",
+                "steps": "Locate barrier wall between locked/unlocked chunks\nPlace water source block 1 block away from barrier (in unlocked chunk)\nObserve water flow attempting to reach barrier\nRepeat with lava",
+                "expected": "Water/lava flows toward barrier but stops at barrier face\nFluids do not pass through barriers\nBarriers remain intact\nNo blocks are destroyed by fluid flow",
+                "edgeCases": "Water from above flowing down barrier wall\nLava from above (should not destroy barriers)\nKelp/seagrass placed near barriers (should not break barriers)\n---"
+            },
+            {
+                "id": "NonPlayerBlockRemoval-5",
+                "title": "Piston Movement",
+                "prerequisites": "",
+                "steps": "Locate barrier wall\nPlace sticky piston facing barrier block (in unlocked chunk)\nPower the piston with redstone\nObserve piston behavior",
+                "expected": "Piston extends but cannot move barrier block\nBarrier remains in place\nPiston retracts normally\nNo holes created in barrier",
+                "edgeCases": "Normal piston (non-sticky)\nPiston from locked side (if accessible)\nSlime block contraptions pushing into barriers\n---"
+            },
+            {
+                "id": "NonPlayerBlockRemoval-6",
+                "title": "Dragon Egg Teleportation",
+                "prerequisites": "",
+                "steps": "Place dragon egg on top of a barrier block at chunk boundary\nRight-click the dragon egg to make it teleport\nCheck if barrier remains after egg teleports away",
+                "expected": "Dragon egg teleports to new location\nBarrier block remains at original position\nNo hole created in barrier wall\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "NonPlayerBlockRemoval-7",
+                "title": "Grass/Mycelium Spread",
+                "prerequisites": "",
+                "steps": "Locate ground-level barrier wall\nPlace dirt blocks with grass on top adjacent to barriers\nWait for grass spread mechanics (may take several minutes with random ticks)\nObserve if barriers are affected",
+                "expected": "Grass spreads to adjacent dirt blocks normally\nBarriers are not converted to grass\nBarriers remain intact\nNo visual glitches\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "NonPlayerBlockRemoval-8",
+                "title": "Bamboo/Sugarcane Growth",
+                "prerequisites": "",
+                "steps": "Locate barrier wall at ground level\nPlant bamboo or sugarcane on blocks adjacent to barriers\nUse bonemeal to speed up growth\nObserve if growth attempts to break through barriers",
+                "expected": "Plants grow upward normally\nPlants do not break or replace barrier blocks\nPlants do not grow into locked chunks\nBarriers remain intact\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "NonPlayerBlockRemoval-9",
+                "title": "Snow/Ice Formation",
+                "prerequisites": "",
+                "steps": "Teleport to snowy biome with barrier walls\nUse `/weather rain` or wait for natural snowfall\nObserve if snow accumulates on barriers\nCheck if freeze mechanics affect barriers",
+                "expected": "Snow may accumulate on top of barriers (cosmetic)\nWater adjacent to barriers may freeze\nBarriers themselves are not destroyed or modified\nNo holes created in barrier wall\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "NonPlayerBlockRemoval-10",
+                "title": "Command-Based Block Changes",
+                "prerequisites": "",
+                "steps": "Locate barrier at chunk boundary\nTry command: `/setblock <barrier_pos> air`\nObserve if barrier is removed and replaced",
+                "expected": "Command initially removes barrier block\nBarrier is immediately replaced by BlockRemovalMixin\nNo permanent hole is created\nServer log shows replacement message",
+                "edgeCases": "`/fill` command covering multiple barrier blocks\n`/clone` command involving barriers\nWorldEdit (if present) commands\n---\n## Regression Tests\nAfter implementing the fix, re-run these existing tests to ensure no functionality broke:\n**Player Block Breaking** (manual-tests/ChunkAccessControl.md)\nPlayers should still be unable to break through barriers by hand\nBarriers broken by players should still be replaced\n**Barrier Placement** (manual-tests/ChunkStorageAndManagement.md)\nBarriers should still be placed correctly when chunks are locked\nMultiple areas should still work correctly\n**Performance**\nCheck server TPS with `/tps` command (if available) or observe lag\nThe mixin should not cause noticeable performance impact\nLarge explosions should not cause excessive lag from barrier replacement\n---\n## Known Limitations\nMixin fires for ALL block removals, which could have slight performance impact in very active worlds\nCommand-based block removal will trigger barrier replacement (may interfere with admin building near barriers)\nDragon egg teleportation is somewhat rare, may be difficult to test extensively\n---\n## Success Criteria\n✅ All test cases pass\n✅ No holes can be created in barrier walls by any non-player means\n✅ Server performance remains acceptable\n✅ Existing functionality still works (regression tests pass)\n✅ Server logs show appropriate barrier replacement messages"
+            }
+        ]
+    },
+    {
+        "id": "phase2-optimizationandfeedback",
+        "title": "Phase 2: Optimization & Edge Cases",
+        "tests": [
+            {
+                "id": "Phase2-OptimizationAndFeedback-1",
+                "title": "Smart Barrier Placement - Locked/Unlocked Boundaries",
+                "prerequisites": "Create a new world with Chunk Locked mod\nStart at coordinates where initial 2x2 chunk area is unlocked\nHave admin access (/op)\n**Setup**:\nNote your initial spawn chunk position (should be a 2x2 area)\nRun `/chunklocked debug info` to see unlocked chunks",
+                "steps": "Stand in an unlocked chunk (part of starting 2x2)",
+                "expected": "Barriers removed from that side, new barriers appear on far side of newly unlocked chunk",
+                "edgeCases": "Check diagonal corners (where north and west barriers meet)\nCheck when unlocked area forms an L-shape (some edges have locked neighbors, some don't)\nCheck when unlocked area is only 1x1 (all 4 sides surrounded by locked chunks)\n---"
+            },
+            {
+                "id": "Phase2-OptimizationAndFeedback-2",
+                "title": "Lazy Barrier Loading",
+                "prerequisites": "Restart the server/world to test fresh chunk loading\nHave several chunks unlocked by advancement completion\nMonitor server logs for timing",
+                "steps": "Close the world\nDelete chunks from the region folder (in run/saves/[world]/region/) to force reload\nDelete specific .mca files that contain locked chunks\nReopen the world\nMonitor as chunks load",
+                "expected": "Matches expected number (16 blocks per side _ # of locked/unlocked boundaries _ 384 world height)",
+                "edgeCases": "World with 100+ chunks unlocked (test at massive scale)\nUnlock chunk right as nearby chunk is loading (timing edge case)\n---"
+            },
+            {
+                "id": "Phase2-OptimizationAndFeedback-3",
+                "title": "Batch Barrier Operations Performance",
+                "prerequisites": "World with server-side profiling enabled (optional: use `/profiler`)\nMultiple locked chunks adjacent to a single unlocked chunk",
+                "steps": "Monitor server TPS with `/tps` command (if available) or watch for lag\nUnlock a single chunk adjacent to 5+ locked chunks",
+                "expected": "Barrier placement time <100ms per chunk",
+                "edgeCases": "Unlock chunk with 100+ barrier blocks to place\nUnlock while other chunks are being loaded\n---"
+            },
+            {
+                "id": "Phase2-OptimizationAndFeedback-4",
+                "title": "Particle Feedback at Barriers",
+                "prerequisites": "Client particle settings NOT set to \"Minimal\"\nStanding at barrier edge",
+                "steps": "Walk toward a barrier wall (locked chunk edge)\nHit the barrier (attempt to move into it)",
+                "expected": "Particles appear in different locations as you hit different parts of the wall",
+                "edgeCases": "With particle settings at \"All\": see abundant particles\nWith particle settings at \"Low\": see fewer particles\nRapidly clicking (spam) barrier: particles should still throttle\n---"
+            },
+            {
+                "id": "Phase2-OptimizationAndFeedback-5",
+                "title": "Sound Feedback at Barriers",
+                "prerequisites": "Master volume ON\nSound settings at reasonable level (not muted)",
+                "steps": "Walk toward barrier\nAttempt to enter locked chunk",
+                "expected": "Sound plays from different locations",
+                "edgeCases": "Very close to barrier: sound still plays\nFar from barrier: sound volume decreases appropriately\nRapidly spamming movement: sound throttled (not spam)\n---"
+            },
+            {
+                "id": "Phase2-OptimizationAndFeedback-6",
+                "title": "Action Bar Message Feedback",
+                "prerequisites": "Playing in single-player or multiplayer\nCan see action bar (text above hotbar)",
+                "steps": "Approach a locked chunk boundary from an unlocked chunk",
+                "expected": "Message appears again",
+                "edgeCases": "At exact chunk boundary (X=0, Z=0): message still appears\nMultiple locked chunks adjacent: message matches closest/most relevant chunk\nAfter unlocking: message shouldn't appear at that boundary anymore\n---"
+            },
+            {
+                "id": "Phase2-OptimizationAndFeedback-7",
+                "title": "Unlock Particle Feedback",
+                "prerequisites": "Have unlock credits available\nParticle settings enabled",
+                "steps": "Complete an advancement to gain unlock credits\nOpen chunk map UI (if implemented) and unlock a chunk",
+                "expected": "Particles appear at correct chunk centers",
+                "edgeCases": "Unlock chunk at world border: particles still visible\nUnlock chunk far from player: particles still spawn and visible\nMultiple simultaneous unlocks: particles for each chunk\n---"
+            },
+            {
+                "id": "Phase2-OptimizationAndFeedback-8",
+                "title": "Unlock Sound Feedback",
+                "prerequisites": "Sound enabled\nJust completed an advancement or have credits to spend",
+                "steps": "Unlock a chunk (via UI or command)",
+                "expected": "Different bell sound plays for new chunk",
+                "edgeCases": "Underwater: sound still audible\nIn caves: sound still plays\nFar from chunk: sound has appropriate falloff\n---"
+            },
+            {
+                "id": "Phase2-OptimizationAndFeedback-9",
+                "title": "Barrier Replacement (Creative Mode)",
+                "prerequisites": "In creative mode\nHolding barrier block in hand (or use creative menu)\nStanding next to a barrier wall",
+                "steps": "Break a barrier block with left-click",
+                "expected": "Barrier still replaced",
+                "edgeCases": "Break dozens in a row: all replaced\nBreak during chunk loading: handled correctly\n---"
+            },
+            {
+                "id": "Phase2-OptimizationAndFeedback-10",
+                "title": "Smart Barrier Removal on Unlock",
+                "prerequisites": "2x2 unlocked starting area\nAt least 1 locked chunk adjacent to starting area",
+                "steps": "Note barrier positions at boundary\nVisualize the wall between unlocked and locked chunk\nUnlock the adjacent locked chunk",
+                "expected": "Barriers only at perimeter where locked chunks still exist",
+                "edgeCases": "Unlock in specific order to create complex shapes\nCheck corners where multiple barrier walls meet\n---"
+            },
+            {
+                "id": "Phase2-OptimizationAndFeedback-11",
+                "title": "Multiplayer Barrier Synchronization",
+                "prerequisites": "2-player multiplayer world\nBoth players can see each other",
+                "steps": "Player A approaches barrier from unlocked chunk",
+                "expected": "Can move freely (barriers removed)",
+                "edgeCases": "Rapid unlock spam by both players\nOne player logs out during barrier placement\nUnlock happens while second player is moving toward boundary\n---"
+            },
+            {
+                "id": "Phase2-OptimizationAndFeedback-12",
+                "title": "World Border vs Barriers (Overworld Only)",
+                "prerequisites": "Access to Nether and End portals\nFrom Overworld (barriers should exist)",
+                "steps": "In Overworld, confirm barriers exist at locked chunk boundaries",
+                "expected": "No barrier blocks found in Nether",
+                "edgeCases": "Travel between Overworld and Nether multiple times\nComplete advancements in Nether (verify chunk unlock only affects Overworld barriers)\n---\n## Summary\n**All Phase 2 tests passing** indicates:\n✅ Smart barrier placement working (only at locked/unlocked boundaries)\n✅ Lazy loading functional (handles async chunk loading)\n✅ Batch operations optimized (no lag on large unlocks)\n✅ Particle feedback working (throttled, visible)\n✅ Sound feedback working (throttled, audible)\n✅ Action bar messages functional (informative, throttled)\n✅ Multiplayer synchronized correctly\n✅ Overworld-only enforcement working\n✅ Edge cases handled appropriately\n**Next Steps**: Proceed to Phase 3 implementation (interaction blocking, ender pearl prevention)."
+            }
+        ]
+    },
+    {
+        "id": "portalandpenaltysystem",
+        "title": "Portal Mechanics & Locked Chunk Penalties",
+        "tests": [
+            {
+                "id": "PortalAndPenaltySystem-1",
+                "title": "Nether Portal - Auto-Unlock with Credits",
+                "prerequisites": "",
+                "steps": "Start in Overworld, unlocked chunk area (barriers visible)\n`/chunklocked givecredits 5` - Ensure you have 5 credits\nNote current chunk coordinates\nBuild a Nether portal and enter it\nTravel in Nether to be far from portal location\nReturn through portal, exit into a **locked chunk**\nObserve action bar message immediately\n**Expected Results**:\n✅ Action bar message: \"§a✓ Chunk auto-unlocked via Nether portal! (Credits remaining: 4)\"\n✅ Barriers around the newly unlocked chunk **disappear**\n✅ New barriers appear around adjacent locked chunks\n✅ Credit count decreases by 1\n✅ Chunk is now marked as unlocked globally\n**Actual Result**: ******\\_\\_\\_******\n**Pass/Fail**: ☐ PASS ☐ FAIL\n---",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "PortalAndPenaltySystem-2",
+                "title": "Nether Portal - No Unlock (No Credits)",
+                "prerequisites": "",
+                "steps": "`/chunklocked givecredits -999` - Remove all credits\nBuild a Nether portal\nTravel in Nether, return through portal\nExit into a locked chunk\nObserve immediately\nWait 5 seconds and observe again\n**Expected Results**:\n✅ Action bar message: \"§a✓ Chunk auto-unlocked...\" does NOT appear\n✅ Within 1 second: Wither II effect appears (darkening screen effect)\n✅ After 5 seconds: Warning message appears:\n\"§c⚠ WARNING: You are in a locked chunk with no credits!\"\n\"§c⚠ Return to an unlocked chunk to escape the Wither effect\"\n✅ Health bar shows Wither effect icon (gray skull)\n✅ Wither effect reapplies after 3 seconds even if you drink milk\n**Actual Result**: ******\\_\\_\\_******\n**Pass/Fail**: ☐ PASS ☐ FAIL\n---",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "PortalAndPenaltySystem-3",
+                "title": "Escape Wither - Walk to Unlocked Chunk",
+                "prerequisites": "",
+                "steps": "Set up: Zero credits, in locked chunk (Wither active)\nWait for Wither effect to be clearly visible\nWalk toward nearest unlocked chunk (follow where barriers end)\nCross into unlocked chunk area\nObserve immediately\n**Expected Results**:\n✅ Wither effect **immediately disappears** (gray skull icon vanishes)\n✅ Health returns to normal color\n✅ No more warning messages\n**Actual Result**: ******\\_\\_\\_******\n**Pass/Fail**: ☐ PASS ☐ FAIL\n---",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "PortalAndPenaltySystem-4",
+                "title": "Escape Wither - Enter Nether",
+                "prerequisites": "",
+                "steps": "Set up: Zero credits, in locked chunk (Wither active)\nLocate/create Nether portal\nEnter Nether portal (trigger dimension change)\nObserve in Nether\n**Expected Results**:\n✅ Wither effect **immediately disappears** upon entering Nether\n✅ No Wither effect visible in Nether\n✅ Can move freely in Nether without penalty\n**Actual Result**: ******\\_\\_\\_******\n**Pass/Fail**: ☐ PASS ☐ FAIL\n---",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "PortalAndPenaltySystem-5",
+                "title": "Milk Bucket Temporary Relief (Wither Reapply)",
+                "prerequisites": "",
+                "steps": "Set up: Zero credits, in locked chunk (Wither active)\nDrink milk bucket\nObserve immediately and at 1 second and 3 seconds\n**Expected Results**:\n✅ Wither effect **temporarily disappears** (instantly when milk consumed)\n✅ At 1 second: Still no Wither (within reapply interval)\n✅ At 3 seconds: Wither effect **reapplies** automatically\n✅ Health shows damage again\n✅ Gray skull icon returns\n✅ Cannot permanently escape penalty with milk buckets\n**Actual Result**: ******\\_\\_\\_******\n**Pass/Fail**: ☐ PASS ☐ FAIL\n---",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "PortalAndPenaltySystem-6",
+                "title": "Return from Nether - Unlocked Chunk (No Penalty)",
+                "prerequisites": "",
+                "steps": "`/chunklocked givecredits 0` - Ensure zero credits\nFrom unlocked chunk, enter Nether\nTravel in Nether\nReturn to Overworld (via portal) - arrive in **unlocked chunk area**\nObserve immediately\n**Expected Results**:\n✅ No Wither effect applies\n✅ No warning messages\n✅ Movement unrestricted\n✅ Can move between unlocked chunks freely\n**Actual Result**: ******\\_\\_\\_******\n**Pass/Fail**: ☐ PASS ☐ FAIL\n---",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "PortalAndPenaltySystem-7",
+                "title": "Return from Nether - Locked Chunk (Penalty Applies)",
+                "prerequisites": "",
+                "steps": "`/chunklocked givecredits 0` - Zero credits\nFrom Overworld, go to locked chunk adjacent to your spawn\nEnter Nether (note that locked chunk restrictions don't apply in Nether)\nReturn through portal, arrive back in same **locked chunk**\nObserve immediately\nWait 5 seconds\n**Expected Results**:\n✅ Wither effect applies within 1 second\n✅ Warning message appears at 5 seconds\n✅ Cannot stay in locked chunk without penalty\n**Actual Result**: ******\\_\\_\\_******\n**Pass/Fail**: ☐ PASS ☐ FAIL\n---",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "PortalAndPenaltySystem-8",
+                "title": "Warning Message Frequency (No Spam)",
+                "prerequisites": "",
+                "steps": "Set up: Zero credits, in locked chunk (Wither active)\nWait and observe warning message frequency\nNote approximate time between messages\nStay in locked chunk for 30 seconds, count messages\n**Expected Results**:\n✅ Warning message appears every ~5 seconds\n✅ Messages are frequent enough to remind player to leave\n✅ Not so frequent that chat is spammed\n✅ Approximately 6 messages in 30 seconds\n**Actual Result**: ******\\_\\_\\_******\nMessage count in 30 seconds: \\_\\_\\_\nApproximate frequency: \\_\\_\\_ seconds\n**Pass/Fail**: ☐ PASS ☐ FAIL\n---",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "PortalAndPenaltySystem-9",
+                "title": "Multiple Players (No Cross-Interference)",
+                "prerequisites": "",
+                "steps": "Player 1: `/chunklocked givecredits 0` - Zero credits\nPlayer 1: Walk into locked chunk (observe Wither applies)\nPlayer 2: Walk into same locked chunk BUT `/chunklocked givecredits 5` - Has credits\nObserve both players\n**Expected Results**:\n✅ Player 1: Wither effect visible, warning messages\n✅ Player 2: No Wither effect, can move freely\n✅ Each player's state is independent\n✅ No cross-effect between players\n**Actual Result**: ******\\_\\_\\_******\n**Pass/Fail**: ☐ PASS ☐ FAIL\n---",
+                "expected": "",
+                "edgeCases": ""
+            },
+            {
+                "id": "PortalAndPenaltySystem-10",
+                "title": "Barrier Updates After Portal Unlock",
+                "prerequisites": "",
+                "steps": "`/chunklocked debugbarriers` - Note frontier chunks and barrier positions\nNote a locked chunk adjacent to unlocked area\nUse Nether portal to unlock that locked chunk\nReturn to world and check barrier status\n`/chunklocked debugbarriers` - Compare to previous state\n**Expected Results**:\n✅ Barriers removed from newly unlocked chunk\n✅ Barriers appear on NEW frontier (if any adjacent chunks are still locked)\n✅ Barrier positions are physically accurate (Y=-64 to Y=319, edge of chunks)\n✅ No orphaned barriers\n**Actual Result**: ******\\_\\_\\_******\n**Pass/Fail**: ☐ PASS ☐ FAIL\n---\n## Summary\n| Test Case | Title                                    | Result        |\n| --------- | ---------------------------------------- | ------------- |\n| 1         | Nether Portal - Auto-Unlock with Credits | ☐ PASS ☐ FAIL |\n| 2         | Nether Portal - No Unlock (No Credits)   | ☐ PASS ☐ FAIL |\n| 3         | Escape Wither - Walk to Unlocked Chunk   | ☐ PASS ☐ FAIL |\n| 4         | Escape Wither - Enter Nether             | ☐ PASS ☐ FAIL |\n| 5         | Milk Bucket Temporary Relief             | ☐ PASS ☐ FAIL |\n| 6         | Return from Nether - Unlocked Chunk      | ☐ PASS ☐ FAIL |\n| 7         | Return from Nether - Locked Chunk        | ☐ PASS ☐ FAIL |\n| 8         | Warning Message Frequency                | ☐ PASS ☐ FAIL |\n| 9         | Multiple Players (No Cross-Interference) | ☐ PASS ☐ FAIL |\n| 10        | Barrier Updates After Portal Unlock      | ☐ PASS ☐ FAIL |\n**Overall Status**: \\_\\_\\_ / 10 passed\n---\n## Notes\nList any bugs or issues discovered: ******\\_\\_\\_******\nList any edge cases found: ******\\_\\_\\_******\nPerformance observations (lag, stuttering): ******\\_\\_\\_******\nSuggestions for improvement: ******\\_\\_\\_******",
+                "expected": "",
+                "edgeCases": ""
+            }
+        ]
+    },
+    {
+        "id": "straybarrierbugfixtest",
+        "title": "Stray Barrier Block Bugfix - Test Case",
+        "tests": [
+            {
+                "id": "StrayBarrierBugfixTest-1",
+                "title": "Basic Stray Barrier Cleanup",
+                "prerequisites": "In Creative mode (easier to break many blocks)\nStanding at a barrier wall between an unlocked and locked chunk\nHave ability to unlock chunks (advancements/credits)",
+                "steps": "Identify a barrier wall at a chunk boundary\nNorth, South, East, or West edge of an unlocked chunk\nAdjacent to a locked chunk\nBreak 5-10 barrier blocks at this location\nLeft-click each barrier block repeatedly",
+                "expected": "No barriers found in the cleared area\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "StrayBarrierBugfixTest-2",
+                "title": "Multiple Break Events at Same Boundary",
+                "prerequisites": "Creative mode\nAt a barrier boundary\nLocked adjacent chunk ready to unlock",
+                "steps": "Break and replace barrier blocks 20+ times in a row\nRapidly left-click different spots in the wall",
+                "expected": "Can walk freely through former boundary\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "StrayBarrierBugfixTest-3",
+                "title": "Complex Shape with Stray Barriers",
+                "prerequisites": "2x2 starting unlocked area\nMultiple locked chunks adjacent in various directions",
+                "steps": "Break some barriers at North boundary\nBreak some barriers at East boundary\nBreak some barriers at South boundary\nVerify all are replaced (wall intact)\nUnlock the North locked chunk",
+                "expected": "Can move freely into North and East chunks, still blocked at South\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "StrayBarrierBugfixTest-4",
+                "title": "Stray Barriers at Different Heights",
+                "prerequisites": "Ability to break barriers at high altitudes (use scaffolding or elytra)\nAbility to dig down to low altitudes",
+                "steps": "Build up to Y=200+ near a barrier boundary\nBreak several barrier blocks at this high altitude",
+                "expected": "Barriers replaced\nUnlock the adjacent locked chunk\nAll barriers removed at all heights\nBoth high altitude and low altitude stray barriers gone\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "StrayBarrierBugfixTest-5",
+                "title": "Multiplayer Stray Barrier Sync",
+                "prerequisites": "2-player multiplayer world\nBoth players in same area with barrier boundary",
+                "steps": "Player A breaks multiple barriers at a boundary",
+                "expected": "Both have free movement, no barriers blocking either player\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "StrayBarrierBugfixTest-6",
+                "title": "Stray Barriers with Natural Blocks",
+                "prerequisites": "A location where terrain naturally fills the chunk boundary\nLocked chunks with barriers that were never broken",
+                "steps": "Find a locked chunk boundary that has stone/dirt/other natural blocks\nBreak a barrier block\nStart fresh world\nUnlock an adjacent chunk WITHOUT breaking any barriers first",
+                "expected": "Natural block breaks normally, not replaced\nUnlock the chunk\nOnly barrier blocks removed\nNatural blocks remain as they were\nNo stray barrier removal affecting terrain\n---\n## Regression Test: Normal Barrier Removal (No Stray Barriers)\n**Goal**: Verify that chunks without stray barriers still clean up properly.\nBarriers cleanly removed\nNo errors or logging issues\nNew area fully accessible\n---\n## Implementation Verification Checklist\nWhen testing, verify:\n[ ] Stray barriers are removed from North boundary\n[ ] Stray barriers are removed from South boundary\n[ ] Stray barriers are removed from East boundary\n[ ] Stray barriers are removed from West boundary\n[ ] All Y-levels affected (high altitude and low altitude)\n[ ] Multiple break cycles handled (20+ replacements)\n[ ] Multiplayer synchronized correctly\n[ ] Non-barrier blocks unaffected\n[ ] No console errors or warnings\n[ ] Performance unaffected (removal shouldn't cause lag)\n---\n## How the Fix Works\n**Before**:\n```\nPlayer breaks barrier at [100, 64, 200]\nSystem replaces with new barrier (not tracked)\nChunk unlock called\nremoveBarriers() only removes tracked barriers\nStray barrier remains at [100, 64, 200] ❌\n```\n**After**:\n```\nPlayer breaks barrier at [100, 64, 200]\nSystem replaces with new barrier (not tracked)\nChunk unlock called\nremoveBarriers() removes tracked barriers\nremoveBarriers() scans entire chunk edge for barriers\nFinds and removes stray barrier at [100, 64, 200] ✅\nAlso calls removeStrayBarriersAtBoundary() for adjacent chunks ✅\n```\n---\n## Known Edge Cases\n### Case 1: Barrier in unloaded chunk\nIf barrier is at boundary but target chunk not loaded\n**Current behavior**: Scans only loaded chunks\n**Mitigation**: Barriers automatically removed when chunk loads (via lazy loader)\n### Case 2: Massive stray barrier count\nIf thousands of barriers replaced (unlikely but possible)\n**Performance**: Scan is O(16 \\* 384) per edge = ~6,000 blocks per chunk\n**Current mitigation**: Acceptable performance for typical scenarios\n### Case 3: Concurrent modifications\nIf barrier break happens during chunk unlock\n**Current behavior**: Thread-safe (uses ConcurrentHashMap)\n**Result**: Both operations may execute, final state is correct\n---\n## Verification Log\n```\n✓ Stray barriers removed from all 4 chunk edges\n✓ Works at all Y-levels (-64 to 319)\n✓ Multiple break cycles handled\n✓ Multiplayer synchronized\n✓ Non-barrier blocks unaffected\n✓ No console errors\n✓ Performance acceptable\n✓ Edge cases documented\n```\n---\n## Next Steps\nOnce this bugfix is verified working:\nMark as complete in implementation plan\nMove to Phase 3 (interaction blocking)\nAdd similar stray cleanup checks for future features",
+                "edgeCases": ""
             }
         ]
     }
