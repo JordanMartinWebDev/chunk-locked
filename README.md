@@ -4,51 +4,38 @@ A Minecraft Fabric mod that transforms gameplay into a progression-based chunk u
 
 ## Overview
 
-**Chunk Locked** restricts players to a limited playable area that expands as they progress through the game. Players begin with a 2x2 chunk starting area and unlock additional chunks by completing Minecraft advancements. Each advancement grants unlock credits based on its difficulty and the selected game mode, which players strategically spend to unlock chunks through a custom UI map.
+**Chunk Locked** restricts players to a limited playable area that expands as they progress through the game. Players begin with a 2x2 chunk starting area and unlock additional chunks by completing Minecraft advancements. Each advancement grants unlock credits, which players spend using commands to unlock adjacent chunks.
 
-### 🎮 Game Modes
+### 🎮 Credit System
 
-**Chunk Locked: Easy** - Casual exploration experience
+**Current Implementation**: Each advancement grants 1 credit (configurable)
 
-- Task advancements: 1-2 credits
-- Goal advancements: 3-5 credits
-- Challenge advancements: 10-15 credits
-- ~250-300 total credits available
+- Configurable per-advancement rewards via JSON config
+- Advancement blacklist support
+- Hot-reload with `/reload` command
 
-**Chunk Locked: Extreme** - Hardcore challenge
-
-- Task advancements: 1 credit
-- Goal advancements: 1 credit
-- Challenge advancements: 5 credits
-- ~120-150 total credits available
+**Future**: Game mode selection (Easy/Extreme) with scaled rewards planned
 
 ## Core Features
 
 ### 🗺️ Chunk-Based Progression System
 
-- **Starting Area**: 2x2 chunks (32x32 blocks) as your initial playable space
-- **Game Mode Selection**: Choose Easy or Extreme mode during world creation
-- **Advancement Unlocking**: Complete advancements to earn unlock credits (amount based on difficulty)
-- **Strategic Selection**: Choose which adjacent chunks to unlock via an interactive map UI
-- **Biome Discovery**: Map overlay shows biome types to plan exploration routes
-- **Access Control**: Custom chunk restriction system (not using native WorldBorder due to limitations)
-- **Visual Boundaries**: Gray haze shader and particle effects for locked chunks
+- **Starting Area**: 2x2 chunks (32x32 blocks) automatically unlocked on first join
+- **Advancement Unlocking**: Complete advancements to earn unlock credits (configurable per advancement)
+- **Command-Based Unlocking**: Use `/chunklocked unlockfacing` to unlock the chunk you're looking at
+- **Barrier System**: Physical barrier blocks at chunk boundaries prevent access to locked chunks
+- **Entity-Specific Collision**: Barriers block players but allow mobs, items, and projectiles to pass through
+- **Access Control**: Per-player chunk tracking with server-side validation
 
 ### 🌍 Multi-Dimensional Mechanics
 
-- **Overworld**: Chunk access restrictions with custom enforcement system
+- **Overworld**: Physical barrier blocks enforce chunk boundaries
 - **Nether & End**: No chunk restrictions for free exploration
-- **Nether Portal Linking**: Special mechanics for cross-dimensional travel
-  - Exiting a Nether portal in a locked chunk automatically unlocks it (if credits available)
-  - Creates disconnected playable areas when unlocking distant chunks
-  - Poison damage penalty when exiting without available unlock credits
-
-### 🗺️ Interactive Map Interface
-
-- Visual representation of unlocked vs locked chunks
-- Display all disconnected playable areas
-- Chunk selection interface for spending unlock credits
-- Real-time chunk status updates
+- **Nether Portal Auto-Unlock**: Exiting a Nether portal in a locked chunk automatically unlocks it (if credits available)
+- **Locked Chunk Penalty**: Wither II effect applied when in locked chunks with no credits
+  - Continuous reapplication prevents milk bucket escape
+  - Automatically removed when leaving locked area or entering Nether/End
+  - Warning messages guide players back to safety
 
 ## Technical Information
 
@@ -81,7 +68,7 @@ cd chunk-locked
 ## Development Status
 
 **Current Version**: 0.1.0-alpha (In Development)  
-**Playable**: ❌ Not Yet - Core mechanics under construction
+**Playable**: ✅ Yes - Core mechanics functional, UI in development
 
 ---
 
@@ -96,6 +83,22 @@ These are features that are **complete and usable** by players in-game:
 - [x] In-game notifications when credits are earned
 - [x] View credit balance with `/chunklocked credits`
 - [x] Credits displayed in action bar after advancement completion
+
+#### ✅ Initial Spawn Setup (WORKING - 100% Complete)
+
+- [x] 2x2 chunks automatically unlocked on first join
+- [x] Barriers placed around starting area
+- [x] Welcome message displayed to new players
+
+#### ✅ Barrier Block System (WORKING - 100% Complete)
+
+- [x] Physical barriers at chunk boundaries
+- [x] Barriers only between locked/unlocked chunks (optimized)
+- [x] Entity-specific collision (players blocked, mobs pass through)
+- [x] Ender pearl blocking (prevents teleporting through barriers)
+- [x] Block break protection (barriers can't be destroyed)
+- [x] Auto-update when chunks unlock
+- [x] Full world height coverage (Y=-64 to Y=319)
 
 #### ✅ Nether Portal Auto-Unlock (WORKING - 100% Complete)
 
@@ -114,22 +117,15 @@ These are features that are **complete and usable** by players in-game:
 - [x] Effect disappears when entering Nether/End (safe zones)
 - [x] Encourages strategic chunk unlocking and planning
 
-#### ⚠️ Barrier Blocks (WORKING - 100% Complete)
-
-- [x] Physical barrier blocks at chunk boundaries
-- [x] Barriers only between locked and unlocked chunks
-- [x] Auto-update when chunks are unlocked
-- [x] Prevents building holes in barriers
-- [x] Invisible to players (only blocking)
-
-#### ⚠️ Admin Commands (WORKING - 100% Complete)
+#### ✅ Admin Commands (WORKING - 100% Complete)
 
 - [x] `/chunklocked givecredits <amount>` - Give credits to self
 - [x] `/chunklocked givecredits <player> <amount>` - Give credits to player
 - [x] `/chunklocked unlock <x> <z>` - Unlock specific chunk
-- [x] `/chunklocked unlockfacing` - Unlock chunk in facing direction
+- [x] `/chunklocked unlockfacing` - Unlock chunk in facing direction (raycasting)
 - [x] `/chunklocked credits` - Check credit balance
 - [x] `/chunklocked debugbarriers` - View frontier and barrier info
+- [x] `/chunklocked help` - Show all commands
 
 #### ✅ Configuration System (Usable)
 
@@ -138,112 +134,48 @@ These are features that are **complete and usable** by players in-game:
 - [x] Advancement blacklist support
 - [x] Hot-reload configuration with `/reload` command
 
-#### 🚧 Chunk Progression System (In Development - Not Usable)
+#### 🚧 Chunk Progression System (Usable via Commands)
 
-- [ ] 🔴 **BLOCKING**: Chunk access control system (not implemented - custom mixins needed)
-- [ ] 🔴 **BLOCKING**: Initial 2x2 spawn area (not implemented)
-- [ ] 🔴 **BLOCKING**: Chunk selection interface (not implemented)
-- [ ] 🔴 **BLOCKING**: Admin commands for testing (not implemented)
+- ✅ Chunk unlock tracking and persistence
+- ✅ Command-based chunk unlocking (`/chunklocked unlockfacing`)
+- ✅ Raycasting system for intelligent chunk selection
+- ❌ Interactive chunk map UI (planned)
+- ❌ Adjacency enforcement (currently can unlock any chunk)
+- ❌ In-game credit display HUD (using commands instead)
 
 #### 🚧 Biome Discovery System (Planned)
 
-- [ ] Map UI biome layer overlay (free - shows all biomes)
-- [ ] Cartographer villager biome maps (expensive - locates specific biomes)
-- [ ] Colorblind-friendly biome color palette
-- [ ] Makes "Adventuring Time" advancement achievable
-
-> **Note**: While the internal systems track chunks and credits, there is currently no way for players to spend credits or enforce chunk restrictions. The mod loads but provides no gameplay restrictions yet. Research determined that custom chunk access control (via mixins) is required instead of native WorldBorder (see docs/core-systems/world-border/DECISION.md).
-
----
-
-### 🛠️ Development Progress (Internal Systems)
-
-These systems are implemented **code-wise** but may not be exposed to users yet:
-
-#### ✅ Backend Systems (Complete)
-
-- [x] Chunk unlock tracking data structures
-- [x] Advancement event listening
-- [x] Credit management logic
-- [x] NBT data persistence (save/load)
-- [x] Network synchronization (server ↔ client)
-- [x] Multi-area detection algorithm
-- [x] Configuration management
-
-#### 🚧 Backend Systems (In Progress)
-
-- [ ] Game mode system (Easy/Extreme selection)
-- [ ] Frame-type-based credit calculation
-- [ ] Advancement frame detection (Task/Goal/Challenge)
-- [ ] Biome data access API integration
-- [ ] Biome color mapping system
-
-#### ❌ Critical Missing Systems
-
-- [ ] Chunk access control system (**highest priority** - custom implementation with mixins)
-- [ ] Movement prevention and interaction blocking
-- [ ] Initial spawn chunk setup
-- [ ] Player interaction UI
-- [ ] Admin command system
-
-#### ❌ Future Features
-
-- [ ] Interactive chunk map (chunk selection interface)
-- [ ] HUD display for credits
-- [ ] Custom visual effects (gray haze shader, particles)
-- [ ] Nether portal mechanics (auto-unlock if credits, wither damage if not)
-- [ ] Dimensional exemptions (Nether/End free movement)
-- [ ] Sound effects and screen effects for borders
+- [ ] Map UI biome layer overlay
+- [ ] Biome-based exploration rewards
+- [ ] Integration with "Adventuring Time" advancement
 
 ---
 
 ### 📊 Completion Status
 
-| Phase                          | System Status | User-Facing Status |
-| ------------------------------ | ------------- | ------------------ |
-| Phase 1: Core Systems          | 70% Complete  | 0% Usable          |
-| Phase 1A: Game Modes           | 0% Complete   | 0% Usable          |
-| Phase 1B: Biome Discovery      | 0% Complete   | 0% Usable          |
-| Phase 2: Chunk Access Control  | 0% Complete   | 0% Usable          |
-| Phase 3: UI & Visualization    | 0% Complete   | 0% Usable          |
-| Phase 4: Dimensional Mechanics | 0% Complete   | 0% Usable          |
-| Phase 5: Polish & Testing      | 60% Complete  | 0% Usable          |
+| Phase                           | Status         | Completion |
+| ------------------------------- | -------------- | ---------- |
+| Phase 1: Core Systems           | ✅ COMPLETE    | 100%       |
+| Phase 2: Dimensional Mechanics  | ✅ COMPLETE    | 100%       |
+| Phase 3: UI & Visualization     | ❌ NOT STARTED | 0%         |
+| Phase 4: Gameplay Polish        | ⚠️ PARTIAL     | 30%        |
+| Phase 5: Testing & Optimization | ⚠️ PARTIAL     | 70%        |
 
-**Overall Project**: ~35% code complete, **0% playable**
+**Overall Project**: ~75% code complete, **80% playable** (missing UI, using commands instead)
 
 ---
 
-### 🎯 Roadmap to Alpha (Minimum Playable Version)
+## Documentation
 
-**Target**: Basic chunk progression gameplay loop
+- **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Detailed feature completion checklist
+- **[Documentation/](Documentation/)** - API documentation for implemented systems
+  - [Architecture.md](Documentation/Architecture.md) - System architecture overview
+  - [AdvancementSystem.md](Documentation/AdvancementSystem.md) - Credit system API
+  - [CommandsAPI.md](Documentation/CommandsAPI.md) - Admin command reference
+- **[manual-tests/](manual-tests/)** - Manual test cases for verification
+- **[docs/00-overview.md](docs/00-overview.md)** - High-level project overview
 
-1. **Chunk Access Control System** (ETA: 4-6 days)
-
-   - Implement ChunkAccessManager (per-player chunk tracking)
-   - Movement prevention mixin (ServerPlayerEntity)
-   - Interaction blocking mixins (block/entity)
-   - Visual feedback (messages, particles)
-   - Server-side validation
-
-2. **Initial Spawn Setup** (ETA: 1 day)
-
-   - Auto-unlock 2x2 chunk area at spawn
-   - First-join detection and setup
-
-3. **Admin Commands** (ETA: 1-2 days)
-
-   - `/chunklocked credits <player> <amount>`
-   - `/chunklocked unlock <x> <z>`
-   - `/chunklocked list`
-
-4. **Basic Chunk Selection** (ETA: 2-3 days)
-   - Simple UI to list adjacent chunks
-   - Click to unlock (spend credits)
-   - Update world border on unlock
-
-**Estimated Time to Alpha**: 7-11 days
-
-## License
+---
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
