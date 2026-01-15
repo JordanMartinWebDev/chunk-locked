@@ -48,14 +48,6 @@
 - **Max Credits**: ~235 credits from all vanilla advancements
 - **Best For**: Challenge seekers, experienced players, strategic planning
 
-#### ⚪ Disabled Mode
-
-- **Selection**: Use any standard world type (Default, Flat, Amplified, etc.)
-- **Behavior**: Mod is completely inactive
-- **Credits**: Advancements do NOT grant credits
-- **Barriers**: No chunk restrictions
-- **Best For**: Normal Minecraft gameplay, testing, creative building
-
 #### Mode Configuration
 
 **How to Set Mode**:
@@ -76,7 +68,7 @@
 If you create a world with a standard world type (Default, Flat, Amplified), you can enable the mod manually:
 
 ```
-/chunklocked set_mode <easy|extreme|disabled>
+/chunklocked set_mode <easy|extreme>
 ```
 
 **Mode Properties**:
@@ -84,7 +76,6 @@ If you create a world with a standard world type (Default, Flat, Amplified), you
 - Mode is **immutable** after first chunk unlock (prevents exploit switching)
 - Mode persists across saves and server restarts
 - Setting the same mode again is safe (no-op)
-- Until mode is set, world operates in DISABLED mode (no restrictions)
 - **Custom presets automatically set mode** - no manual configuration needed!
 
 #### Emergency Barrier Toggle
@@ -176,7 +167,6 @@ These are features that are **complete and usable** by players in-game:
 
 - [x] Easy Mode with generous credit rewards (1/5/10)
 - [x] Extreme Mode with challenging progression (1/2/5)
-- [x] Disabled Mode for vanilla gameplay
 - [x] Frame-based credit calculation (TASK/GOAL/CHALLENGE)
 - [x] Starter items (3 Oak Saplings + 10 Bone Meal) in Easy/Extreme
 - [x] Mode persistence across saves

@@ -224,46 +224,197 @@ public class Chunklocked implements ModInitializer {
 				NotificationManager.syncCreditsToClient(player, 0, 0);
 			}
 
-			// Auto-unlock spawn area logic
-			if (chunkAccessManager != null && chunkManager != null) {
-				Set<ChunkPos> globalUnlockedChunks = chunkManager.getGlobalUnlockedChunks();
-				int chunkX = ((int) Math.floor(player.getX())) >> 4;
-				int chunkZ = ((int) Math.floor(player.getZ())) >> 4;
-				ChunkPos spawnChunk = new ChunkPos(chunkX, chunkZ);
+			// Initialize spawn area for first player
+			handleInitialPlayerSpawn(player, server.overworld());
+		});
 
-				if (globalUnlockedChunks.isEmpty()) {
-					LOGGER.info("First player ever detected! Initializing 2x2 spawn area...");
-					ChunkPos[] spawnChunks = {
-							new ChunkPos(chunkX, chunkZ),
-							new ChunkPos(chunkX + 1, chunkZ),
-							new ChunkPos(chunkX, chunkZ + 1),
-							new ChunkPos(chunkX + 1, chunkZ + 1)
-					};
-					for (ChunkPos chunk : spawnChunks) {
-						chunkManager.forceUnlockChunk(player.getUUID(), chunk, server.overworld());
-					}
-					player.sendSystemMessage(Component.literal(
-							"§aWelcome! Your 2x2 spawn area has been unlocked. Complete advancements to unlock more chunks!"));
-				} else if (!globalUnlockedChunks.contains(spawnChunk)) {
-					LOGGER.warn("Player spawned in LOCKED chunk! Unlocking 2x2 area...");
-					ChunkPos[] spawnChunks = {
-							new ChunkPos(chunkX, chunkZ),
-							new ChunkPos(chunkX + 1, chunkZ),
-							new ChunkPos(chunkX, chunkZ + 1),
-							new ChunkPos(chunkX + 1, chunkZ + 1)
-					};
-					for (ChunkPos chunk : spawnChunks) {
-						chunkManager.forceUnlockChunk(player.getUUID(), chunk, server.overworld());
-					}
-					player.sendSystemMessage(Component.literal(
-							"§eYour spawn was outside the safe area. Unlocked a 2x2 area around you!"));
-				}
+		// Register player respawn event - this fires AFTER the new player entity is
+		// created
+		net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
+			LOGGER.info("=== Player {} respawned (alive={}) ===", newPlayer.getName().getString(), alive);
 
-				chunkManager.initializeBarriersForPlayer(server.overworld(), player.getUUID());
-			}
+			// Get the world from the new player
+			net.minecraft.server.level.ServerLevel world = (net.minecraft.server.level.ServerLevel) newPlayer.level();
+
+			// Handle respawn location check
+			handlePlayerRespawn(newPlayer, world);
 		});
 
 		LOGGER.info("Chunk Locked mod initialized successfully");
+	}
+
+	/**
+	 * Checks if a player is spawning in a locked chunk during first join.
+	 * Only handles initial world setup, NOT respawns.
+	 * 
+	 * @param player The player to check
+	 * @param world  The world the player is in (must be overworld)
+	 */
+	public static void handleInitialPlayerSpawn(net.minecraft.server.level.ServerPlayer player,
+			net.minecraft.server.level.ServerLevel world) {
+		// Only handle overworld spawns
+		if (!world.dimension().equals(net.minecraft.world.level.Level.OVERWORLD)) {
+			return;
+		}
+
+		// Check if managers are initialized
+		if (chunkAccessManager == null || chunkManager == null) {
+			return;
+		}
+
+		Set<ChunkPos> globalUnlockedChunks = chunkManager.getGlobalUnlockedChunks();
+
+		// If first player ever, unlock initial spawn area
+		if (globalUnlockedChunks.isEmpty()) {
+			int chunkX = ((int) Math.floor(player.getX())) >> 4;
+			int chunkZ = ((int) Math.floor(player.getZ())) >> 4;
+
+			LOGGER.info("First player ever detected! Initializing 2x2 spawn area...");
+			ChunkPos[] spawnChunks = {
+					new ChunkPos(chunkX, chunkZ),
+					new ChunkPos(chunkX + 1, chunkZ),
+					new ChunkPos(chunkX, chunkZ + 1),
+					new ChunkPos(chunkX + 1, chunkZ + 1)
+			};
+			for (ChunkPos chunk : spawnChunks) {
+				chunkManager.forceUnlockChunk(player.getUUID(), chunk, world);
+			}
+			player.sendSystemMessage(Component.literal(
+					"§aWelcome! Your 2x2 spawn area has been unlocked. Complete advancements to unlock more chunks!"));
+			chunkManager.initializeBarriersForPlayer(world, player.getUUID());
+		}
+	}
+
+	/**
+	 * Handles player respawn after death. If the respawn location is in a locked
+	 * chunk,
+	 * teleports the player to the nearest unlocked chunk instead.
+	 * This preserves normal bed/spawn point behavior when in unlocked chunks.
+	 * 
+	 * @param player The player who respawned
+	 * @param world  The world the player respawned in
+	 */
+	public static void handlePlayerRespawn(net.minecraft.server.level.ServerPlayer player,
+			net.minecraft.server.level.ServerLevel world) {
+		LOGGER.info("=== handlePlayerRespawn called for player {} ===", player.getName().getString());
+
+		// Only handle overworld respawns
+		if (!world.dimension().equals(net.minecraft.world.level.Level.OVERWORLD)) {
+			LOGGER.info("Not in overworld, skipping respawn handling");
+			return;
+		}
+
+		// Check if managers are initialized
+		if (chunkAccessManager == null || chunkManager == null) {
+			LOGGER.warn("Managers not initialized! Cannot handle respawn.");
+			return;
+		}
+
+		// Check if player respawned in a locked chunk
+		Set<ChunkPos> globalUnlockedChunks = chunkManager.getGlobalUnlockedChunks();
+		int chunkX = ((int) Math.floor(player.getX())) >> 4;
+		int chunkZ = ((int) Math.floor(player.getZ())) >> 4;
+		ChunkPos respawnChunk = new ChunkPos(chunkX, chunkZ);
+
+		LOGGER.info("Player respawned at chunk {} (pos: {}, {})", respawnChunk, player.getX(), player.getZ());
+		LOGGER.info("Is chunk unlocked? {}", globalUnlockedChunks.contains(respawnChunk));
+
+		// If respawn location (bed/world spawn) is in an unlocked chunk, do nothing
+		// This preserves normal bed respawn behavior
+		if (globalUnlockedChunks.contains(respawnChunk)) {
+			LOGGER.debug("Player {} respawned in unlocked chunk {} - no relocation needed",
+					player.getName().getString(), respawnChunk);
+			return;
+		}
+
+		// Respawn location is in a locked chunk - need to relocate player
+		if (!globalUnlockedChunks.contains(respawnChunk)) {
+			LOGGER.info("Player {} respawned in LOCKED chunk {}! Finding safe location...",
+					player.getName().getString(), respawnChunk);
+
+			// Find the nearest unlocked chunk
+			ChunkPos nearestUnlocked = findNearestUnlockedChunk(respawnChunk, globalUnlockedChunks);
+
+			if (nearestUnlocked != null) {
+				// Teleport to center of the safe chunk at a safe Y level
+				double safeX = nearestUnlocked.getMinBlockX() + 8.0;
+				double safeZ = nearestUnlocked.getMinBlockZ() + 8.0;
+				double safeY = world.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+						(int) safeX, (int) safeZ) + 1.0;
+
+				player.teleportTo(safeX, safeY, safeZ);
+				player.sendSystemMessage(Component.literal(
+						"§eYour respawn point was in a locked area. Teleported to the nearest unlocked chunk!"));
+
+				LOGGER.info("Teleported player to safe chunk {} at ({}, {}, {})",
+						nearestUnlocked, safeX, safeY, safeZ);
+			} else {
+				// No unlocked chunks found (shouldn't happen if initial spawn worked)
+				LOGGER.error("No unlocked chunks found for respawn! This shouldn't happen.");
+				player.sendSystemMessage(Component.literal(
+						"§cError: No safe spawn location found. Contact an admin."));
+			}
+		}
+	}
+
+	/**
+	 * Finds the nearest unlocked chunk to a given position.
+	 * Uses a spiral search pattern to find the closest unlocked chunk.
+	 * 
+	 * @param origin         The starting chunk position
+	 * @param unlockedChunks Set of all unlocked chunks
+	 * @return The nearest unlocked chunk, or null if none found within search
+	 *         radius
+	 */
+	private static ChunkPos findNearestUnlockedChunk(ChunkPos origin, Set<ChunkPos> unlockedChunks) {
+		if (unlockedChunks.isEmpty()) {
+			return null;
+		}
+
+		// First check if any adjacent chunks are unlocked (most common case)
+		ChunkPos[] adjacent = {
+				new ChunkPos(origin.x - 1, origin.z),
+				new ChunkPos(origin.x + 1, origin.z),
+				new ChunkPos(origin.x, origin.z - 1),
+				new ChunkPos(origin.x, origin.z + 1)
+		};
+		for (ChunkPos adj : adjacent) {
+			if (unlockedChunks.contains(adj)) {
+				return adj;
+			}
+		}
+
+		// Search in expanding square spiral up to 16 chunks away
+		int maxRadius = 16;
+		ChunkPos nearest = null;
+		double nearestDistSq = Double.MAX_VALUE;
+
+		for (int radius = 1; radius <= maxRadius; radius++) {
+			for (int dx = -radius; dx <= radius; dx++) {
+				for (int dz = -radius; dz <= radius; dz++) {
+					// Only check chunks on the current radius perimeter
+					if (Math.abs(dx) != radius && Math.abs(dz) != radius) {
+						continue;
+					}
+
+					ChunkPos candidate = new ChunkPos(origin.x + dx, origin.z + dz);
+					if (unlockedChunks.contains(candidate)) {
+						double distSq = dx * dx + dz * dz;
+						if (distSq < nearestDistSq) {
+							nearestDistSq = distSq;
+							nearest = candidate;
+						}
+					}
+				}
+			}
+			// If we found something at this radius, return it (closest possible)
+			if (nearest != null) {
+				return nearest;
+			}
+		}
+
+		// If nothing found in search radius, just return any unlocked chunk
+		return unlockedChunks.iterator().next();
 	}
 
 	private void registerPackets() {

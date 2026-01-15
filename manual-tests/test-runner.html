@@ -833,6 +833,92 @@
         ]
     },
     {
+        "id": "fluidblocking",
+        "title": "Fluid Blocking",
+        "tests": [
+            {
+                "id": "FluidBlocking-1",
+                "title": "Water Bucket Placement",
+                "prerequisites": "Load world with barrier walls\nHave water bucket in inventory\nBe in creative or survival mode",
+                "steps": "Locate a barrier wall (vertical barrier at chunk boundary)\nStand next to the barrier\nPlace water bucket on the ground next to the barrier (within 1-2 blocks)\nObserve water flow behavior for 5-10 seconds",
+                "expected": "Water flows horizontally and vertically\nWater does NOT destroy any barrier blocks\nBarrier wall remains intact\nWater stops at the barrier edge (doesn't flow through)",
+                "edgeCases": "Test at different Y levels (ground level, Y=100, Y=200)\nTest with water source placed above barriers (falling water)\nTest with water source placed directly adjacent to barrier\nTest in ocean biome where water naturally exists\n---"
+            },
+            {
+                "id": "FluidBlocking-2",
+                "title": "Lava Bucket Placement",
+                "prerequisites": "Load world with barrier walls\nHave lava bucket in inventory\nBe in creative mode (safer)",
+                "steps": "Locate a barrier wall\nStand next to the barrier\nPlace lava bucket on the ground next to the barrier (within 1-2 blocks)\nObserve lava flow behavior for 10-15 seconds (lava flows slower)",
+                "expected": "Lava flows horizontally and slowly\nLava does NOT destroy any barrier blocks\nBarrier wall remains intact\nLava stops at the barrier edge",
+                "edgeCases": "Test at different Y levels\nTest with lava source placed above barriers (falling lava)\nTest in the Nether where lava naturally exists\nTest lava flowing into water near barriers (creates cobblestone/obsidian)\n---"
+            },
+            {
+                "id": "FluidBlocking-3",
+                "title": "Mob Pathfinding Through Barriers",
+                "prerequisites": "Load world with barrier walls\nHave mob spawn eggs (chicken, cow, pig)\nHave mob attractant (wheat for cows, seeds for chickens)",
+                "steps": "Spawn a mob on one side of a barrier wall\nStand on the opposite side of the barrier\nHold the mob's preferred food item to attract it\nObserve mob behavior",
+                "expected": "Mob walks directly through the barrier (no collision)\nMob pathfinds through barrier to reach player\nMob does not get stuck or confused at barrier\nMob treats barrier as if it doesn't exist",
+                "edgeCases": "Test with different mob types (passive, neutral, hostile)\nTest with multiple barriers in a row\nTest with barriers at different angles\nTest mob AI pathfinding around corners with barriers\n---"
+            },
+            {
+                "id": "FluidBlocking-4",
+                "title": "Player Collision With Barriers",
+                "prerequisites": "Load world with barrier walls\nBe in survival or creative mode",
+                "steps": "Locate a barrier wall\nWalk directly toward the barrier\nAttempt to walk through the barrier\nTry jumping while walking into barrier\nTry sprinting into barrier",
+                "expected": "Player is completely blocked by barrier\nPlayer cannot walk through barrier\nPlayer cannot jump over barrier (if barrier is tall enough)\nPlayer collision is smooth (no glitching)",
+                "edgeCases": "Test collision at chunk boundaries\nTest collision while swimming\nTest collision while flying in creative mode\nTest collision while riding a horse/boat\n---"
+            },
+            {
+                "id": "FluidBlocking-5",
+                "title": "Ender Pearl Blocking",
+                "prerequisites": "Load world with barrier walls\nHave ender pearls in inventory\nBe in survival or creative mode",
+                "steps": "Stand 10 blocks away from a barrier wall\nAim ender pearl directly at the barrier\nThrow ender pearl\nObserve ender pearl behavior",
+                "expected": "Ender pearl hits barrier and falls to ground\nPlayer does NOT teleport through barrier\nEnder pearl is blocked (same as player collision)",
+                "edgeCases": "Test throwing pearl at different angles\nTest throwing pearl from above barrier\nTest throwing pearl from below barrier\n---"
+            },
+            {
+                "id": "FluidBlocking-6",
+                "title": "Ocean/River Generation",
+                "prerequisites": "Generate new world or find ocean biome\nEnsure barrier walls cross water bodies",
+                "steps": "Locate a barrier wall that intersects with ocean or river\nObserve barrier integrity in water\nCheck for any missing barrier blocks underwater\nSwim around the barrier checking all Y levels",
+                "expected": "All barrier blocks present underwater\nNo gaps in barrier wall due to water\nWater exists on both sides but doesn't flow through\nBarrier extends from bedrock to world height",
+                "edgeCases": "Test in different water depths\nTest in flowing rivers\nTest in waterfalls\nTest near water source blocks\n---"
+            },
+            {
+                "id": "FluidBlocking-7",
+                "title": "World Generation with Lava",
+                "prerequisites": "Find or generate world with lava lakes\nEnsure barrier walls cross lava bodies",
+                "steps": "Locate a barrier wall that intersects with lava lake\nObserve barrier integrity in/near lava\nCheck for any missing barrier blocks near lava\nCheck both surface lava and underground lava",
+                "expected": "All barrier blocks present near/in lava\nNo gaps in barrier wall due to lava\nLava doesn't flow through barriers\nBarrier blocks don't combust or break",
+                "edgeCases": "Test in Nether lava oceans\nTest with lava falls\nTest at Y=11 (common lava level)\nTest in lava lakes at various Y levels\n---"
+            },
+            {
+                "id": "FluidBlocking-8",
+                "title": "Chunk Boundary Water/Lava",
+                "prerequisites": "Load world with barriers at chunk boundaries\nHave F3+G enabled to see chunk boundaries",
+                "steps": "Press F3+G to show chunk boundaries\nLocate barrier exactly at chunk edge\nPlace water/lava bucket at chunk boundary near barrier\nObserve fluid behavior across chunk boundary",
+                "expected": "Barrier blocks at chunk boundaries resist water/lava\nNo difference in behavior compared to mid-chunk barriers\nChunk loading doesn't affect barrier integrity\nFluids don't destroy barriers during chunk load/unload",
+                "edgeCases": "Test while standing in one chunk, placing fluid in another\nTest with barriers at corner where 4 chunks meet\nTest rapidly loading/unloading chunks with fluid present\nTest in multiplayer with multiple players in different chunks\n---"
+            },
+            {
+                "id": "FluidBlocking-9",
+                "title": "Waterlogging Prevention",
+                "prerequisites": "Have water bucket\nHave barrier wall",
+                "steps": "Right-click on barrier block with water bucket\nAttempt to waterlog the barrier\nObserve if water appears inside barrier block",
+                "expected": "Water bucket cannot waterlog barrier\nBarrier block remains unchanged\nWater is not placed (bucket remains full)",
+                "edgeCases": "Test with various waterloggable blocks nearby\nTest placing water source adjacent then removing it\n---"
+            },
+            {
+                "id": "FluidBlocking-10",
+                "title": "Fluid Flow After Barrier Placement",
+                "prerequisites": "Have water source already flowing\nHave admin access to place barriers",
+                "steps": "Create a flowing water source\nUse `/chunklocked unlock` or admin command to place barriers in water's path\nObserve water behavior after barrier placement\nCheck if water recalculates flow around new barriers",
+                "expected": "Water flow stops at newly placed barriers\nWater recalculates path around barriers\nNewly placed barriers are not destroyed by existing water\nWater does not glitch through barriers",
+                "edgeCases": "Place barriers in middle of waterfall\nPlace barriers while water is mid-flow\nPlace multiple barrier walls rapidly in flowing water\n---\n## Test Results Summary\n| Test Case                | Pass/Fail | Notes |\n| ------------------------ | --------- | ----- |\n| 1. Water Bucket          | ⬜        |       |\n| 2. Lava Bucket           | ⬜        |       |\n| 3. Mob Pathfinding       | ⬜        |       |\n| 4. Player Collision      | ⬜        |       |\n| 5. Ender Pearl           | ⬜        |       |\n| 6. Ocean Generation      | ⬜        |       |\n| 7. Lava Generation       | ⬜        |       |\n| 8. Chunk Boundary        | ⬜        |       |\n| 9. Waterlogging          | ⬜        |       |\n| 10. Flow After Placement | ⬜        |       |\n---\n## Known Issues\n**None currently identified**\n---\n## Regression Testing\nWhen making changes to barrier properties or placement logic, re-run:\nTest Case 1 (Water Bucket) - Critical\nTest Case 3 (Mob Pathfinding) - Critical\nTest Case 4 (Player Collision) - Critical\nThese three tests cover the core functionality that must not break."
+            }
+        ]
+    },
+    {
         "id": "gamemodevariants",
         "title": "Game Mode Variants",
         "tests": [
@@ -1322,6 +1408,76 @@
                 "prerequisites": "",
                 "steps": "`/chunklocked debugbarriers` - Note frontier chunks and barrier positions\nNote a locked chunk adjacent to unlocked area\nUse Nether portal to unlock that locked chunk\nReturn to world and check barrier status\n`/chunklocked debugbarriers` - Compare to previous state\n**Expected Results**:\n✅ Barriers removed from newly unlocked chunk\n✅ Barriers appear on NEW frontier (if any adjacent chunks are still locked)\n✅ Barrier positions are physically accurate (Y=-64 to Y=319, edge of chunks)\n✅ No orphaned barriers\n**Actual Result**: ******\\_\\_\\_******\n**Pass/Fail**: ☐ PASS ☐ FAIL\n---\n## Summary\n| Test Case | Title                                    | Result        |\n| --------- | ---------------------------------------- | ------------- |\n| 1         | Nether Portal - Auto-Unlock with Credits | ☐ PASS ☐ FAIL |\n| 2         | Nether Portal - No Unlock (No Credits)   | ☐ PASS ☐ FAIL |\n| 3         | Escape Wither - Walk to Unlocked Chunk   | ☐ PASS ☐ FAIL |\n| 4         | Escape Wither - Enter Nether             | ☐ PASS ☐ FAIL |\n| 5         | Milk Bucket Temporary Relief             | ☐ PASS ☐ FAIL |\n| 6         | Return from Nether - Unlocked Chunk      | ☐ PASS ☐ FAIL |\n| 7         | Return from Nether - Locked Chunk        | ☐ PASS ☐ FAIL |\n| 8         | Warning Message Frequency                | ☐ PASS ☐ FAIL |\n| 9         | Multiple Players (No Cross-Interference) | ☐ PASS ☐ FAIL |\n| 10        | Barrier Updates After Portal Unlock      | ☐ PASS ☐ FAIL |\n**Overall Status**: \\_\\_\\_ / 10 passed\n---\n## Notes\nList any bugs or issues discovered: ******\\_\\_\\_******\nList any edge cases found: ******\\_\\_\\_******\nPerformance observations (lag, stuttering): ******\\_\\_\\_******\nSuggestions for improvement: ******\\_\\_\\_******",
                 "expected": "",
+                "edgeCases": ""
+            }
+        ]
+    },
+    {
+        "id": "respawninlockedchunks",
+        "title": "Player Respawn in Locked Chunks",
+        "tests": [
+            {
+                "id": "RespawnInLockedChunks-1",
+                "title": "Respawn at World Spawn in Locked Chunk",
+                "prerequisites": "New world created with Chunk Locked mode\nWorld spawn is in a locked chunk (or you've unlocked chunks away from spawn)",
+                "steps": "Create a new Chunk Locked world (Easy or Extreme mode)\nUnlock chunks away from world spawn using `/chunklocked forceunlock` command\nDie in the game (fall damage, lava, etc.)\nRespawn at world spawn",
+                "expected": "Player respawns successfully\nA 2x2 chunk area is automatically unlocked around the respawn location\nPlayer receives message: \"§eYou respawned in a locked area. Unlocked a 2x2 area around you!\"\nBarriers are refreshed and player can move normally\nNo death loop or stuck scenario",
+                "edgeCases": "Test with different death causes (fall, drowning, lava, mobs)\nTest in multiplayer with multiple players respawning\n---"
+            },
+            {
+                "id": "RespawnInLockedChunks-2",
+                "title": "Respawn at Bed in Locked Chunk",
+                "prerequisites": "Chunk Locked world with some unlocked chunks\nBed placed in a chunk that will be locked",
+                "steps": "Place and set spawn point at a bed in an unlocked chunk\nNote the bed's chunk coordinates\nUse `/chunklocked forcelock <chunkX> <chunkZ>` to lock the bed's chunk\nGo somewhere else and die\nRespawn at the bed",
+                "expected": "Player respawns at bed location successfully\nThe bed's chunk and surrounding 2x2 area are automatically unlocked\nPlayer receives message: \"§eYou respawned in a locked area. Unlocked a 2x2 area around you!\"\nBarriers update and player is not trapped\nBed remains functional",
+                "edgeCases": "Test with missing/obstructed bed (bed was broken)\nTest with bed in different dimension (Nether)\n---"
+            },
+            {
+                "id": "RespawnInLockedChunks-3",
+                "title": "Respawn at Respawn Anchor in Locked Chunk (Nether)",
+                "prerequisites": "Chunk Locked world with Nether access\nRespawn Anchor placed and charged in Nether\nNote: Nether should not have restrictions in Chunk Locked mode",
+                "steps": "Enter the Nether\nPlace and charge a Respawn Anchor\nSet spawn point by using the anchor\nDie in the Nether\nRespawn at the anchor",
+                "expected": "Player respawns at anchor successfully\nNo chunk locking mechanics apply (Nether is unrestricted)\nPlayer can move freely\nNo auto-unlock messages appear",
+                "edgeCases": "Test with depleted anchor\nTest with obstructed anchor\n---"
+            },
+            {
+                "id": "RespawnInLockedChunks-4",
+                "title": "Normal Respawn in Already Unlocked Chunk",
+                "prerequisites": "Chunk Locked world\nSpawn point (bed/world spawn) in an already unlocked chunk",
+                "steps": "Set spawn point in a chunk that's already unlocked\nDie\nRespawn",
+                "expected": "Player respawns normally\nNo additional chunks are unlocked\nNo \"respawned in locked area\" message appears\nGameplay continues normally\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "RespawnInLockedChunks-5",
+                "title": "Multiple Respawns in Same Location",
+                "prerequisites": "Chunk Locked world\nSpawn point in a locked chunk",
+                "steps": "Set spawn point in a locked chunk\nDie and respawn (chunks get unlocked)\nUse `/chunklocked forcelock` to re-lock those chunks\nDie and respawn again in the same location",
+                "expected": "First respawn: 2x2 area unlocked, message appears\nAfter re-locking: chunks are locked again\nSecond respawn: 2x2 area unlocked again, message appears\nSystem handles repeated respawns gracefully\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "RespawnInLockedChunks-6",
+                "title": "Respawn Edge Case - Corner of Locked Area",
+                "prerequisites": "Chunk Locked world with specific unlock pattern\nSpawn point at the edge of an unlocked area, bordering locked chunks",
+                "steps": "Create a situation where spawn point is exactly at the corner of unlocked chunks\nLock the spawn chunk\nDie and respawn",
+                "expected": "2x2 area centered on spawn chunk is unlocked\nUnlocking may overlap with existing unlocked chunks (this is okay)\nPlayer can move in all directions\nBarriers update correctly\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "RespawnInLockedChunks-7",
+                "title": "Multiplayer - Multiple Players Respawning Simultaneously",
+                "prerequisites": "Multiplayer Chunk Locked world\n2+ players\nSpawn points in locked chunks",
+                "steps": "Have 2+ players set spawn points in different locked chunks\nAll players die at roughly the same time\nAll players respawn simultaneously",
+                "expected": "Each player respawns in their locked chunk\nEach player gets their own 2x2 area unlocked\nNo race conditions or conflicts\nAll players receive appropriate messages\nChunk unlock data persists correctly\n---",
+                "edgeCases": ""
+            },
+            {
+                "id": "RespawnInLockedChunks-8",
+                "title": "Respawn in Different Dimension (End Return)",
+                "prerequisites": "Chunk Locked world\nAccess to The End",
+                "steps": "Enter The End\nDefeat the Ender Dragon (or die in The End)\nReturn to Overworld via end portal or death\nDie and respawn repeatedly (10+ times in 1 minute)\nMonitor server/client performance\nUnlock 100+ chunks in the world\nDie and respawn in a locked chunk",
+                "expected": "If returning via end portal: normal end portal behavior\nIf dying in The End: respawn at Overworld spawn point\nIf Overworld spawn is in locked chunk: auto-unlock 2x2 area\nAppropriate messages appear\nNo dimensional teleport issues\n---\n## Regression Tests\n### Previous Bug Verification\n**Bug**: Player died and respawned outside unlocked chunks, becoming trapped\n**Verification Steps**:\nCreate a new Chunk Locked world\nUnlock a few chunks away from world spawn\nSet spawn at a bed in a locked chunk\nDie\nRespawn\nPlayer does NOT get trapped in locked chunks\n2x2 area is automatically unlocked\nPlayer can continue playing normally\nBug is FIXED ✅\n---\n## Performance Tests\n### Test Case P1: Rapid Respawns\nNo memory leaks\nNo performance degradation\nChunk unlocks happen quickly (<100ms)\nBarrier updates are efficient\n### Test Case P2: Respawn with Many Unlocked Chunks\nRespawn handling is fast\nNo lag spikes\nChunk unlock operations remain efficient\n---\n## Known Limitations\nNone currently identified. If limitations are discovered during testing, document them here.\n---\n## Test Checklist\n[ ] Test Case 1: World Spawn Respawn\n[ ] Test Case 2: Bed Respawn in Locked Chunk\n[ ] Test Case 3: Respawn Anchor (Nether)\n[ ] Test Case 4: Normal Respawn in Unlocked Chunk\n[ ] Test Case 5: Multiple Respawns Same Location\n[ ] Test Case 6: Corner/Edge Respawn\n[ ] Test Case 7: Multiplayer Simultaneous Respawn\n[ ] Test Case 8: End Dimension Return/Respawn\n[ ] Regression: Original Bug Fixed\n[ ] Performance: Rapid Respawns\n[ ] Performance: Many Unlocked Chunks\n---\n## Notes\nThe respawn handler is implemented as a mixin in `ServerPlayerMixin.java`\nIt injects into the `respawn()` method at the RETURN point\nThe handler calls `Chunklocked.handlePlayerSpawnInLockedChunk(player, world, true)`\nThe `true` parameter indicates this is a respawn (vs initial join)\nAuto-unlocking 2x2 areas ensures players are never trapped after death",
                 "edgeCases": ""
             }
         ]
