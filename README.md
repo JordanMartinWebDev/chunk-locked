@@ -1,6 +1,10 @@
 # Chunk Locked
 
-A Minecraft Fabric mod that transforms gameplay into a progression-based chunk unlocking experience. Start small, expand strategically.
+<div align="center">
+  <img src="assets/chunk-locked/icon.png" alt="Chunk Locked Icon" width="200"/>
+  
+  **A Minecraft Fabric mod that transforms gameplay into a progression-based chunk unlocking experience. Start small, expand strategically.**
+</div>
 
 ## Overview
 
@@ -17,6 +21,98 @@ A Minecraft Fabric mod that transforms gameplay into a progression-based chunk u
 **Future**: Game mode selection (Easy/Extreme) with scaled rewards planned
 
 ## Core Features
+
+### 🎮 Game Modes
+
+**Chunk Locked** offers three difficulty modes to customize your progression experience:
+
+#### 🟢 Easy Mode
+
+- **Selection**: Choose "Chunklocked: Easy" world type during world creation
+- **Credit Rewards**: Generous rewards based on advancement difficulty
+  - TASK advancements: +1 credit (e.g., "Stone Age", "Acquire Hardware")
+  - GOAL advancements: +5 credits (e.g., "Hot Stuff", "Cover Me With Diamonds")
+  - CHALLENGE advancements: +10 credits (e.g., "Postmortal", "How Did We Get Here?")
+- **Starter Items**: 3 Oak Saplings + 10 Bone Meal on first join (helps with food/trees)
+- **Max Credits**: ~390 credits from all vanilla advancements
+- **Best For**: Casual players, first-time experience, enjoying the journey
+
+#### 🔴 Extreme Mode
+
+- **Selection**: Choose "Chunklocked: Extreme" world type during world creation
+- **Credit Rewards**: Reduced rewards for harder progression
+  - TASK advancements: +1 credit (same as Easy)
+  - GOAL advancements: +2 credits (reduced from 5)
+  - CHALLENGE advancements: +5 credits (reduced from 10)
+- **Starter Items**: 3 Oak Saplings + 10 Bone Meal on first join
+- **Max Credits**: ~235 credits from all vanilla advancements
+- **Best For**: Challenge seekers, experienced players, strategic planning
+
+#### ⚪ Disabled Mode
+
+- **Selection**: Use any standard world type (Default, Flat, Amplified, etc.)
+- **Behavior**: Mod is completely inactive
+- **Credits**: Advancements do NOT grant credits
+- **Barriers**: No chunk restrictions
+- **Best For**: Normal Minecraft gameplay, testing, creative building
+
+#### Mode Configuration
+
+**How to Set Mode**:
+
+**✅ Automatic (Recommended) - Just Select the World Type!**:
+
+1. Click "Singleplayer" → "Create New World"
+2. Go to the "World" tab
+3. Click the "World Type" button to cycle through options
+4. Select **"Chunklocked: Easy"** or **"Chunklocked: Extreme"**
+5. Create your world - **that's it!** The mode is automatically configured on first world load
+6. Join the world and receive your starter items automatically
+
+**No commands needed!** The mod detects your preset selection and configures everything automatically.
+
+**Manual Command (Only for Standard Worlds)**:
+
+If you create a world with a standard world type (Default, Flat, Amplified), you can enable the mod manually:
+
+```
+/chunklocked set_mode <easy|extreme|disabled>
+```
+
+**Mode Properties**:
+
+- Mode is **immutable** after first chunk unlock (prevents exploit switching)
+- Mode persists across saves and server restarts
+- Setting the same mode again is safe (no-op)
+- Until mode is set, world operates in DISABLED mode (no restrictions)
+- **Custom presets automatically set mode** - no manual configuration needed!
+
+#### Emergency Barrier Toggle
+
+If you get stuck due to barrier bugs, use:
+
+```
+/chunklocked toggle_barriers
+```
+
+- **Disables**: Removes all barriers from the world (progression still tracks)
+- **Re-enables**: Restores barriers at all chunk boundaries
+- Useful for emergency escapes or debugging
+- State persists across saves
+
+#### Progression Comparison
+
+| Milestone           | Easy Mode   | Extreme Mode | Notes                    |
+| ------------------- | ----------- | ------------ | ------------------------ |
+| Early Game (Nether) | ~15 chunks  | ~9 chunks    | After basic advancements |
+| Mid Game (End)      | ~65 chunks  | ~38 chunks   | After Nether exploration |
+| Late Game (Dragon)  | ~195 chunks | ~117 chunks  | After End access         |
+| 100% Completion     | ~390 chunks | ~235 chunks  | Every advancement        |
+
+**Realistic Endgame**: Most players complete 50-70% of advancements naturally, so expect:
+
+- Easy: ~200-270 chunks unlocked
+- Extreme: ~120-160 chunks unlocked
 
 ### 🗺️ Chunk-Based Progression System
 
@@ -75,6 +171,20 @@ cd chunk-locked
 ### 🎯 User-Facing Features
 
 These are features that are **complete and usable** by players in-game:
+
+#### ✅ Game Mode Variants (WORKING - 100% Complete)
+
+- [x] Easy Mode with generous credit rewards (1/5/10)
+- [x] Extreme Mode with challenging progression (1/2/5)
+- [x] Disabled Mode for vanilla gameplay
+- [x] Frame-based credit calculation (TASK/GOAL/CHALLENGE)
+- [x] Starter items (3 Oak Saplings + 10 Bone Meal) in Easy/Extreme
+- [x] Mode persistence across saves
+- [x] Mode immutability (prevents exploit switching)
+- [x] `/chunklocked set_mode` command for manual activation
+- [x] `/chunklocked toggle_barriers` emergency command
+- [x] Recipe advancement filtering (no credits for recipes)
+- [x] World preset data packs for Easy/Extreme types
 
 #### ✅ Advancement Credit System (WORKING - 100% Complete)
 
@@ -157,11 +267,12 @@ These are features that are **complete and usable** by players in-game:
 | ------------------------------- | -------------- | ---------- |
 | Phase 1: Core Systems           | ✅ COMPLETE    | 100%       |
 | Phase 2: Dimensional Mechanics  | ✅ COMPLETE    | 100%       |
+| Phase 2.5: Game Mode Variants   | ✅ COMPLETE    | 100%       |
 | Phase 3: UI & Visualization     | ❌ NOT STARTED | 0%         |
-| Phase 4: Gameplay Polish        | ⚠️ PARTIAL     | 30%        |
-| Phase 5: Testing & Optimization | ⚠️ PARTIAL     | 70%        |
+| Phase 4: Gameplay Polish        | ⚠️ PARTIAL     | 40%        |
+| Phase 5: Testing & Optimization | ⚠️ PARTIAL     | 75%        |
 
-**Overall Project**: ~75% code complete, **80% playable** (missing UI, using commands instead)
+**Overall Project**: ~82% code complete, **85% playable** (missing UI, using commands instead)
 
 ---
 

@@ -1,6 +1,8 @@
 package chunklocked.advancement;
 
 import chunklocked.config.AdvancementRewardConfig;
+import chunklocked.core.ChunklockedMode;
+import chunklocked.core.ChunklockedMode.AdvancementType;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -79,36 +81,31 @@ public class AdvancementCreditManager {
    * Handles an advancement completion event.
    * <p>
    * This method:
-   * 1. Checks if the advancement is blacklisted
+   * 1. Calculates credits based on mode and advancement type
    * 2. Checks if the player has already received a reward for this advancement
-   * 3. Looks up custom reward amount (or uses default)
-   * 4. Awards credits to the player
-   * 5. Marks the advancement as rewarded
+   * 3. Awards credits to the player
+   * 4. Marks the advancement as rewarded
+   * <p>
+   * The mode parameter determines how credits are calculated:
+   * - DISABLED: Uses config multipliers
+   * - EASY/EXTREME: Uses frame-based multipliers
    *
-   * @param player      The player who completed the advancement
-   * @param advancement The advancement that was completed
+   * @param player        The player who completed the advancement
+   * @param advancement   The advancement that was completed
+   * @param criterionName The criterion that was completed (unused)
+   * @param mode          The world's difficulty mode
    */
-  public void onAdvancementCompleted(ServerPlayer player, AdvancementHolder advancement, String criterionName) {
+  public void onAdvancementCompleted(ServerPlayer player, AdvancementHolder advancement, String criterionName,
+      ChunklockedMode mode) {
     String advancementId = advancement.id().toString();
     UUID playerId = player.getUUID();
 
     LOGGER.info("=== Processing advancement completion ===");
     LOGGER.info("  Advancement ID: {}", advancementId);
     LOGGER.info("  Player: {}", player.getName().getString());
+    LOGGER.info("  Mode: {}", mode);
     LOGGER.info("  Is Recipe: {}", isRecipeAdvancement(advancementId));
     LOGGER.info("  Is Blacklisted: {}", blacklistedAdvancements.contains(advancementId));
-
-    // Skip recipe advancements (they're not "real" progression advancements)
-    if (isRecipeAdvancement(advancementId)) {
-      LOGGER.info("  RESULT: Skipping - This is a recipe advancement");
-      return;
-    }
-
-    // Check blacklist first
-    if (blacklistedAdvancements.contains(advancementId)) {
-      LOGGER.info("  RESULT: Skipping - This advancement is blacklisted");
-      return;
-    }
 
     // Get or create player progression data
     PlayerProgressionData progression = getPlayerData(playerId);
@@ -119,8 +116,14 @@ public class AdvancementCreditManager {
       return;
     }
 
-    // Determine credit amount
-    int creditsToAward = customRewards.getOrDefault(advancementId, defaultCredits);
+    // Calculate credits using mode-aware logic
+    int creditsToAward = calculateCredits(advancement, mode);
+
+    // If credits are 0, log reason and skip
+    if (creditsToAward == 0) {
+      LOGGER.info("  RESULT: Skipping - 0 credits (recipe/blacklisted/no DisplayInfo)");
+      return;
+    }
 
     // Award credits
     progression.addCredits(creditsToAward);
@@ -156,6 +159,92 @@ public class AdvancementCreditManager {
    */
   public PlayerProgressionData getPlayerData(ServerPlayer player) {
     return getPlayerData(player.getUUID());
+  }
+
+  /**
+   * Extracts the advancement frame type from the advancement holder.
+   * <p>
+   * The frame type is the cosmetic border shown around advancement icons:
+   * <ul>
+   * <li>TASK - Square border (regular advancements)</li>
+   * <li>GOAL - Rounded border (important milestones)</li>
+   * <li>CHALLENGE - Ornate border (difficult achievements)</li>
+   * </ul>
+   * <p>
+   * Returns null if the advancement has no DisplayInfo (e.g., hidden
+   * advancements).
+   *
+   * @param advancement The advancement holder
+   * @return The advancement type, or null if no display info available
+   */
+  private AdvancementType getAdvancementType(AdvancementHolder advancement) {
+    var display = advancement.value().display();
+    if (display.isEmpty()) {
+      return null;
+    }
+
+    var frameType = display.get().getType();
+    // Map Minecraft's AdvancementType enum to our AdvancementType enum
+    // Minecraft uses: net.minecraft.advancements.AdvancementType (TASK, GOAL,
+    // CHALLENGE)
+    return switch (frameType.toString()) {
+      case "TASK" -> AdvancementType.TASK;
+      case "GOAL" -> AdvancementType.GOAL;
+      case "CHALLENGE" -> AdvancementType.CHALLENGE;
+      default -> null;
+    };
+  }
+
+  /**
+   * Calculates credits to award for an advancement based on the world's
+   * difficulty mode.
+   * <p>
+   * <b>Filtering rules (apply to all modes):</b>
+   * <ul>
+   * <li>Recipe advancements: 0 credits (they're auto-granted)</li>
+   * <li>Blacklisted advancements: 0 credits (config override)</li>
+   * <li>Advancements without DisplayInfo: 0 credits (hidden/invalid)</li>
+   * </ul>
+   * <p>
+   * <b>Credit calculation by mode:</b>
+   * <ul>
+   * <li><b>DISABLED</b>: Uses config multipliers (custom rewards + default)</li>
+   * <li><b>EASY</b>: TASK=1, GOAL=5, CHALLENGE=10</li>
+   * <li><b>EXTREME</b>: TASK=1, GOAL=2, CHALLENGE=5</li>
+   * </ul>
+   *
+   * @param advancement The advancement that was completed
+   * @param mode        The world's difficulty mode
+   * @return The number of credits to award (0 if filtered out)
+   */
+  private int calculateCredits(AdvancementHolder advancement, ChunklockedMode mode) {
+    String advancementId = advancement.id().toString();
+
+    // Filter 1: Recipe advancements never award credits
+    if (isRecipeAdvancement(advancementId)) {
+      return 0;
+    }
+
+    // Filter 2: Blacklisted advancements never award credits
+    if (blacklistedAdvancements.contains(advancementId)) {
+      return 0;
+    }
+
+    // Filter 3: Advancements without DisplayInfo never award credits
+    AdvancementType type = getAdvancementType(advancement);
+    if (type == null) {
+      LOGGER.debug("Advancement {} has no DisplayInfo, awarding 0 credits", advancementId);
+      return 0;
+    }
+
+    // Calculate credits based on mode
+    if (mode == ChunklockedMode.DISABLED) {
+      // DISABLED mode: use config-based calculation
+      return customRewards.getOrDefault(advancementId, defaultCredits);
+    } else {
+      // EASY or EXTREME mode: use frame-based multipliers
+      return mode.getCreditMultiplier(type);
+    }
   }
 
   /**

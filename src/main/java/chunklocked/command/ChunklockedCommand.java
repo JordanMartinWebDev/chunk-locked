@@ -5,14 +5,17 @@ import chunklocked.advancement.AdvancementCreditManager;
 import chunklocked.core.ChunkAccessManager;
 import chunklocked.core.ChunkUnlockData;
 import chunklocked.core.ChunkManager;
+import chunklocked.core.ChunklockedMode;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.ChunkPos;
@@ -80,6 +83,16 @@ public class ChunklockedCommand {
         // /chunklocked debugbarriers - Show all barrier positions
         .then(Commands.literal("debugbarriers")
             .executes(ChunklockedCommand::debugBarriers))
+
+        // /chunklocked set_mode <easy|extreme|disabled> - Set the Chunklocked mode
+        // (admin only)
+        .then(Commands.literal("set_mode")
+            .then(Commands.argument("mode", StringArgumentType.word())
+                .executes(ChunklockedCommand::setMode)))
+
+        // /chunklocked toggle_barriers - Toggle barriers on/off (emergency use)
+        .then(Commands.literal("toggle_barriers")
+            .executes(ChunklockedCommand::toggleBarriers))
 
         // /chunklocked givecredits <amount> - Give yourself credits (admin)
         // /chunklocked givecredits <player> <amount> - Give player credits (admin)
@@ -764,5 +777,147 @@ public class ChunklockedCommand {
     }
 
     return amount;
+  }
+
+  /**
+   * Sets the Chunklocked mode for the world (admin only).
+   * Usage: /chunklocked set_mode <easy|extreme|disabled>
+   * <p>
+   * Note: Mode can only be changed if it's currently DISABLED or hasn't been set
+   * yet.
+   * This prevents exploits where players switch modes to game the system.
+   */
+  private static int setMode(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    CommandSourceStack source = context.getSource();
+    String modeString = StringArgumentType.getString(context, "mode");
+
+    // Parse mode from string
+    ChunklockedMode newMode;
+    try {
+      newMode = ChunklockedMode.valueOf(modeString.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      source.sendFailure(Component.literal("§cInvalid mode: " + modeString + ". Valid modes: easy, extreme, disabled"));
+      return 0;
+    }
+
+    // Get persistent data
+    ChunkUnlockData persistentData = Chunklocked.getPersistentData();
+    if (persistentData == null) {
+      source.sendFailure(Component.literal("§cFailed to access world data"));
+      return 0;
+    }
+
+    ChunklockedMode currentMode = persistentData.getMode();
+
+    // Check if mode change is allowed
+    if (currentMode != ChunklockedMode.DISABLED && currentMode != newMode) {
+      source.sendFailure(Component.literal(
+          "§cCannot change mode from " + currentMode + " to " + newMode + ". Mode can only be set once per world."));
+      source.sendFailure(Component.literal("§7(This prevents players from switching modes to exploit the system)"));
+      return 0;
+    }
+
+    // Set the mode
+    persistentData.setMode(newMode);
+    persistentData.markDirtyAndSave();
+
+    source.sendSuccess(() -> Component.literal("§aChunklocked mode set to: §e" + newMode), true);
+    Chunklocked.LOGGER.info("Chunklocked mode changed from {} to {} by {}", currentMode, newMode, source.getTextName());
+
+    return 1;
+  }
+
+  /**
+   * Toggles barriers on/off globally (emergency use for stuck players).
+   * Usage: /chunklocked toggle_barriers
+   * <p>
+   * When barriers are disabled:
+   * - All existing barriers are removed from the world
+   * - Progression still works (credits, chunk unlocking)
+   * - Players can explore freely
+   * <p>
+   * When barriers are re-enabled:
+   * - Barriers are restored at chunk boundaries
+   * - Normal chunk locking behavior resumes
+   */
+  private static int toggleBarriers(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    CommandSourceStack source = context.getSource();
+
+    // Get persistent data
+    ChunkUnlockData persistentData = Chunklocked.getPersistentData();
+    if (persistentData == null) {
+      source.sendFailure(Component.literal("§cFailed to access world data"));
+      return 0;
+    }
+
+    // Get barrier manager and chunk manager
+    chunklocked.border.ChunkBarrierManager barrierManager = Chunklocked.getBarrierManager();
+    ChunkManager chunkManager = Chunklocked.getChunkManager();
+
+    if (barrierManager == null || chunkManager == null) {
+      source.sendFailure(Component.literal("§cChunk management system not initialized"));
+      return 0;
+    }
+
+    // Toggle the state
+    boolean currentlyEnabled = persistentData.areBarriersEnabled();
+    boolean newState = !currentlyEnabled;
+    persistentData.setBarriersEnabled(newState);
+
+    // Get server and overworld
+    net.minecraft.server.MinecraftServer server = source.getServer();
+    ServerLevel overworld = server.overworld();
+
+    if (newState) {
+      // Re-enable barriers: restore them at chunk boundaries
+      source.sendSuccess(() -> Component.literal("§aRe-enabling barriers..."), false);
+
+      Set<ChunkPos> unlockedChunks = chunkManager.getGlobalUnlockedChunks();
+      int barrierCount = 0;
+
+      // Place barriers for all locked chunks adjacent to unlocked ones
+      for (ChunkPos unlockedChunk : unlockedChunks) {
+        // Check all 4 adjacent chunks
+        ChunkPos[] adjacents = {
+            new ChunkPos(unlockedChunk.x + 1, unlockedChunk.z),
+            new ChunkPos(unlockedChunk.x - 1, unlockedChunk.z),
+            new ChunkPos(unlockedChunk.x, unlockedChunk.z + 1),
+            new ChunkPos(unlockedChunk.x, unlockedChunk.z - 1)
+        };
+
+        for (ChunkPos adjacent : adjacents) {
+          if (!chunkManager.isChunkUnlockedGlobally(adjacent)) {
+            barrierManager.placeBarriers(overworld, adjacent, unlockedChunks);
+            barrierCount++;
+          }
+        }
+      }
+
+      final int finalBarrierCount = barrierCount;
+      source.sendSuccess(() -> Component.literal("§aBarriers restored! §7(" + finalBarrierCount + " chunks protected)"),
+          true);
+      Chunklocked.LOGGER.info("Barriers re-enabled by {}. Restored barriers for {} locked chunks.",
+          source.getTextName(), barrierCount);
+
+    } else {
+      // Disable barriers: remove all barriers from the world
+      source.sendSuccess(() -> Component.literal("§cDisabling barriers..."), false);
+
+      int removedCount = barrierManager.clearAllBarriers(overworld);
+
+      source.sendSuccess(() -> Component.literal("§cBarriers disabled! §7(Removed " + removedCount + " barriers)"),
+          true);
+      source.sendSuccess(
+          () -> Component
+              .literal("§eWarning: §7Progression still active. Use §e/chunklocked toggle_barriers §7again to restore."),
+          false);
+      Chunklocked.LOGGER.warn("Barriers disabled by {}. Removed {} barriers. Progression still tracked.",
+          source.getTextName(), removedCount);
+    }
+
+    // Save the state
+    persistentData.markDirtyAndSave();
+
+    return 1;
   }
 }

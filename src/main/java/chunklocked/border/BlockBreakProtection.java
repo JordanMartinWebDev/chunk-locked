@@ -80,9 +80,9 @@ public class BlockBreakProtection {
     if (shouldHave) {
       // Replace the broken block with a barrier immediately
       LOGGER.info("Block broken at barrier boundary {}, replacing with barrier", pos);
-      // Use flags that prevent neighbor updates (prevents lava/water from flowing
-      // back)
-      serverWorld.setBlock(pos, Chunklocked.BARRIER_BLOCK_V2.defaultBlockState(), 2 | 16);
+      // Use flags that prevent neighbor updates and fluid flow-back
+      // Flag 2 = update clients, Flag 16 = skip neighbor reactions
+      serverWorld.setBlock(pos, Chunklocked.BARRIER_BLOCK_V2.defaultBlockState(), 2 | 1);
     } else {
       LOGGER.info("Position {} is not a barrier boundary", pos);
     }

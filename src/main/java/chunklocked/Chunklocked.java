@@ -11,6 +11,9 @@ import chunklocked.config.ConfigManager;
 import chunklocked.core.ChunkAccessManager;
 import chunklocked.core.ChunkManager;
 import chunklocked.core.ChunkUnlockData;
+import chunklocked.core.ChunklockedMode;
+import chunklocked.core.ChunklockedWorldPresets;
+import chunklocked.core.StarterItemsManager;
 import chunklocked.network.CreditUpdatePacket;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -30,12 +33,24 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.Set;
+import java.util.UUID;
 
 public class Chunklocked implements ModInitializer {
 	public static final String MOD_ID = "chunk-locked";
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+	/**
+	 * Creates an Identifier for this mod with the given path.
+	 * 
+	 * @param path The path component of the identifier
+	 * @return An Identifier with namespace "chunk-locked" and the given path
+	 */
+	public static Identifier id(String path) {
+		return Identifier.fromNamespaceAndPath(MOD_ID, path);
+	}
 
 	/**
 	 * The custom semi-transparent barrier block for chunk boundaries.
@@ -53,6 +68,9 @@ public class Chunklocked implements ModInitializer {
 	public void onInitialize() {
 		LOGGER.info("Initializing Chunk Locked mod...");
 
+		// Initialize world preset keys (actual presets are defined in data packs)
+		ChunklockedWorldPresets.register();
+
 		// Create ResourceKey for the block
 		Identifier blockId = Identifier.fromNamespaceAndPath(MOD_ID, "barrier_block_v2");
 		ResourceKey<Block> blockKey = ResourceKey.create(BuiltInRegistries.BLOCK.key(), blockId);
@@ -66,7 +84,10 @@ public class Chunklocked implements ModInitializer {
 						.mapColor(net.minecraft.world.level.material.MapColor.NONE)
 						.strength(-1.0f, 3600000.0f)
 						.noOcclusion()
-						.noLootTable()));
+						.noLootTable()
+						.pushReaction(net.minecraft.world.level.material.PushReaction.BLOCK)
+						.forceSolidOn()
+						.isRedstoneConductor((state, level, pos) -> true)));
 		LOGGER.info("Registered custom barrier block: barrier_block_v2");
 
 		// Register network packets
@@ -104,6 +125,20 @@ public class Chunklocked implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 			LOGGER.info("Server started, loading chunk unlock data...");
 			persistentData = ChunkUnlockData.getOrCreate(server, creditManager);
+
+			// Auto-detect mode from world settings on first load (brand new world)
+			if (persistentData.getMode() == ChunklockedMode.DISABLED &&
+					persistentData.getGlobalUnlockedChunks().isEmpty()) {
+				ChunklockedMode detectedMode = detectModeFromWorldSettings(server);
+				if (detectedMode != ChunklockedMode.DISABLED) {
+					LOGGER.info("Auto-detected Chunklocked mode from world settings: {}", detectedMode);
+					persistentData.setMode(detectedMode);
+					persistentData.markDirtyAndSave();
+				}
+			}
+
+			LOGGER.info("Chunklocked mode: {}", persistentData.getMode());
+
 			chunkManager = new ChunkManager(persistentData, creditManager);
 			chunkAccessManager = new ChunkAccessManager(chunkManager);
 			barrierManager = new ChunkBarrierManager();
@@ -124,7 +159,12 @@ public class Chunklocked implements ModInitializer {
 					advancement.id(),
 					criterionName);
 
-			creditManager.onAdvancementCompleted(player, advancement, criterionName);
+			// Get the current mode from persistent data
+			ChunklockedMode mode = (persistentData != null)
+					? persistentData.getMode()
+					: ChunklockedMode.DISABLED;
+
+			creditManager.onAdvancementCompleted(player, advancement, criterionName, mode);
 
 			var playerData = creditManager.getPlayerData(player.getUUID());
 			if (playerData != null) {
@@ -156,6 +196,21 @@ public class Chunklocked implements ModInitializer {
 				}
 				if (barrierManager == null) {
 					barrierManager = new ChunkBarrierManager();
+				}
+			}
+
+			// Give starter items if applicable
+			if (persistentData != null) {
+				ChunklockedMode mode = persistentData.getMode();
+				UUID playerId = player.getUUID();
+
+				if (StarterItemsManager.shouldGiveStarterItems(mode,
+						persistentData.hasReceivedStarterItems(playerId))) {
+					StarterItemsManager.giveStarterItems(player);
+					persistentData.markStarterItemsGiven(playerId);
+					persistentData.markDirtyAndSave();
+					LOGGER.info("Gave starter items to first-time player: {}",
+							player.getName().getString());
 				}
 			}
 
@@ -214,6 +269,66 @@ public class Chunklocked implements ModInitializer {
 	private void registerPackets() {
 		PayloadTypeRegistry.playS2C().register(CreditUpdatePacket.TYPE, CreditUpdatePacket.CODEC);
 		LOGGER.debug("Registered network packets");
+	}
+
+	/**
+	 * Detects Chunklocked mode from temporary marker files created by the client.
+	 * The WorldPresetsMixin creates marker files when our presets are added to the
+	 * UI.
+	 * 
+	 * @param server The server instance
+	 * @return Detected mode or DISABLED if no marker files found
+	 */
+	private static ChunklockedMode detectModeFromWorldSettings(net.minecraft.server.MinecraftServer server) {
+		try {
+			// Use Fabric Loader API to get game directory - works reliably across all
+			// environments
+			Path gameDir = FabricLoader.getInstance().getGameDir();
+
+			LOGGER.info("Detecting mode from marker files...");
+			LOGGER.info("  Game directory: {}", gameDir);
+
+			Path easyMarker = gameDir.resolve("chunklocked_preset_chunk-locked_easy.tmp");
+			Path extremeMarker = gameDir.resolve("chunklocked_preset_chunk-locked_extreme.tmp");
+
+			LOGGER.info("  Looking for Easy marker at: {}", easyMarker);
+			LOGGER.info("  Looking for Extreme marker at: {}", extremeMarker);
+			LOGGER.info("  Easy marker exists: {}", java.nio.file.Files.exists(easyMarker));
+			LOGGER.info("  Extreme marker exists: {}", java.nio.file.Files.exists(extremeMarker));
+
+			ChunklockedMode detectedMode = ChunklockedMode.DISABLED;
+
+			if (java.nio.file.Files.exists(easyMarker)) {
+				String content = java.nio.file.Files.readString(easyMarker).trim();
+				if (content.equals("chunk-locked:easy")) {
+					detectedMode = ChunklockedMode.EASY;
+					LOGGER.info("Detected Easy mode from marker file");
+				}
+				// Clean up the marker file
+				java.nio.file.Files.delete(easyMarker);
+			}
+
+			if (java.nio.file.Files.exists(extremeMarker)) {
+				String content = java.nio.file.Files.readString(extremeMarker).trim();
+				if (content.equals("chunk-locked:extreme")) {
+					// Extreme takes precedence if both markers exist (shouldn't happen)
+					detectedMode = ChunklockedMode.EXTREME;
+					LOGGER.info("Detected Extreme mode from marker file");
+				}
+				// Clean up the marker file
+				java.nio.file.Files.delete(extremeMarker);
+			}
+
+			if (detectedMode == ChunklockedMode.DISABLED) {
+				LOGGER.debug("No Chunklocked marker files found - normal world");
+			}
+
+			return detectedMode;
+
+		} catch (Exception e) {
+			LOGGER.error("Failed to detect mode from marker files", e);
+			return ChunklockedMode.DISABLED;
+		}
 	}
 
 	public static AdvancementCreditManager getCreditManager() {

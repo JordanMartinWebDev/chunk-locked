@@ -833,6 +833,140 @@
         ]
     },
     {
+        "id": "gamemodevariants",
+        "title": "Game Mode Variants",
+        "tests": [
+            {
+                "id": "GameModeVariants-1",
+                "title": "World Creation with EASY Mode",
+                "prerequisites": "Clean Minecraft installation with mod installed",
+                "steps": "Launch Minecraft\nClick \"Singleplayer\" → \"Create New World\"\nClick \"World Type\" dropdown\nSelect \"Chunklocked: Easy\"\nCreate and enter the world\nWait for world to load\nCheck server console for mode auto-detection\nCheck inventory for starter items",
+                "expected": "\"Chunklocked: Easy\" appears in world type dropdown\nWorld generates normally\n**NO COMMAND NEEDED** - mode is auto-detected\nConsole logs: \"User selected Chunklocked: Easy preset\"\nConsole logs: \"Detected Easy mode from marker file\"\nConsole logs: \"Chunklocked mode: EASY\"\nPlayer spawns in 2x2 chunk area with barriers visible\nStarter items AUTOMATICALLY received (3 Oak Saplings + 10 Bone Meal)\nChat message: \"You received starter items!\"",
+                "edgeCases": "Verify world type persists if you cancel and reopen creation screen\nVerify difficulty setting doesn't affect Chunklocked mode\n---"
+            },
+            {
+                "id": "GameModeVariants-2",
+                "title": "World Creation with EXTREME Mode",
+                "prerequisites": "Clean Minecraft installation with mod installed",
+                "steps": "Launch Minecraft\nClick \"Singleplayer\" → \"Create New World\"\nClick \"World Type\" dropdown\nSelect \"Chunklocked: Extreme\"\nCreate and enter the world\nCheck server console for auto-detection\nCheck inventory for starter items",
+                "expected": "\"Chunklocked: Extreme\" appears in world type dropdown\nWorld generates normally\n**NO COMMAND NEEDED** - mode is auto-detected\nConsole logs: \"User selected Chunklocked: Extreme preset\"\nConsole logs: \"Detected Extreme mode from marker file\"\nConsole logs: \"Chunklocked mode: EXTREME\"\nPlayer spawns in 2x2 chunk area with barriers\nStarter items AUTOMATICALLY received (3 Oak Saplings + 10 Bone Meal)\nChat message: \"You received starter items!\"",
+                "edgeCases": "Compare with EASY mode - world generation should be identical\nOnly difference is credit rewards\n---"
+            },
+            {
+                "id": "GameModeVariants-3",
+                "title": "World Creation with Default Type (DISABLED Mode)",
+                "prerequisites": "Clean Minecraft installation with mod installed",
+                "steps": "Create new world with \"Default\" world type\nEnter the world\nCheck server console\nTry to place barriers manually (should not be blocked)\nComplete an advancement (e.g., get wood)",
+                "expected": "World generates normally without mod interference\nConsole logs: \"Chunklocked mode is DISABLED. Use /chunklocked set_mode to enable...\"\nNo barriers placed anywhere\nPlayer can move freely in all directions\nAdvancement completion does NOT grant credits\nNO starter items received",
+                "edgeCases": "Verify mod is completely inactive (no performance impact)\nVerify you can enable mode later with `/chunklocked set_mode easy`\n---"
+            },
+            {
+                "id": "GameModeVariants-4",
+                "title": "Credit Rewards in EASY Mode (TASK/GOAL/CHALLENGE)",
+                "prerequisites": "World created with \"Chunklocked: Easy\" world type (auto-detects mode)",
+                "steps": "Complete a TASK advancement (e.g., \"Stone Age\" - pick up cobblestone)\nRun `/chunklocked credits` - check credit count\nComplete a GOAL advancement (e.g., \"Hot Stuff\" - fill bucket with lava)\nRun `/chunklocked credits` - check credit count\nComplete a CHALLENGE advancement (e.g., \"Postmortal\" - use totem of undying)\nRun `/chunklocked credits` - check credit count",
+                "expected": "TASK advancement grants +1 credit (e.g., \"Stone Age\")\nGOAL advancement grants +5 credits (e.g., \"Hot Stuff\")\nCHALLENGE advancement grants +10 credits (e.g., \"Postmortal\")\nConsole logs each credit reward\n`/chunklocked credits` shows updated count",
+                "edgeCases": "Recipe advancements grant 0 credits (filtered out)\nBlacklisted advancements grant 0 credits\nCompleting same advancement twice grants 0 credits (already rewarded)\n---"
+            },
+            {
+                "id": "GameModeVariants-5",
+                "title": "Credit Rewards in EXTREME Mode (Reduced Rewards)",
+                "prerequisites": "World created with \"Chunklocked: Extreme\" world type (auto-detects mode)",
+                "steps": "Complete a TASK advancement (e.g., \"Stone Age\")\nCheck credit count\nComplete a GOAL advancement (e.g., \"Hot Stuff\")\nCheck credit count\nComplete a CHALLENGE advancement (e.g., \"Postmortal\")\nCheck credit count",
+                "expected": "TASK advancement grants +1 credit (same as EASY)\nGOAL advancement grants +2 credits (reduced from 5)\nCHALLENGE advancement grants +5 credits (reduced from 10)\nCredit accumulation is much slower than EASY mode",
+                "edgeCases": "Compare with EASY mode - EXTREME should feel significantly harder\nVerify all filtering (recipes, blacklist) still works\n---"
+            },
+            {
+                "id": "GameModeVariants-6",
+                "title": "Starter Items on First Join (EASY/EXTREME)",
+                "prerequisites": "New world with \"Chunklocked: Easy\" or \"Chunklocked: Extreme\" preset",
+                "steps": "Create world with Easy or Extreme preset\nJoin world for first time (mode auto-detects)\nOpen inventory (E key)\nCheck for Oak Saplings and Bone Meal\nLeave world and rejoin\nCheck inventory again",
+                "expected": "**First Join**: Inventory contains 3 Oak Saplings + 10 Bone Meal\nChat message: \"You received starter items!\"\n**Rejoin**: NO additional items given\nNBT data persists across saves",
+                "edgeCases": "Full inventory: Items drop at player's feet\nMultiple players: Each receives items once\nItems can be used/dropped/crafted normally\n---"
+            },
+            {
+                "id": "GameModeVariants-7",
+                "title": "Starter Items NOT Given in DISABLED Mode",
+                "prerequisites": "World with Default world type (DISABLED mode)",
+                "steps": "Create world without Chunklocked world type\nJoin world\nCheck inventory",
+                "expected": "NO starter items received\nNo chat message about starter items\nInventory is empty except for default spawn items",
+                "edgeCases": "Enabling mode later with command does NOT give retroactive starter items\n---"
+            },
+            {
+                "id": "GameModeVariants-8",
+                "title": "Mode Persistence Across Save/Load",
+                "prerequisites": "World with EASY mode set",
+                "steps": "Create world, set mode to EASY\nComplete 2-3 advancements to earn credits\nUnlock 1-2 chunks using credits\nSave and quit to title\nReload the world\nCheck mode with console logs\nCheck credits with `/chunklocked credits`\nCheck unlocked chunks still accessible",
+                "expected": "Mode remains EASY after reload\nCredits persist correctly\nUnlocked chunks remain unlocked\nBarriers remain in correct positions\nNo data loss",
+                "edgeCases": "Restart entire Minecraft client\nCopy world folder to different location\nVerify NBT file contains correct mode\n---"
+            },
+            {
+                "id": "GameModeVariants-9",
+                "title": "Mode Immutability (Cannot Change After Set)",
+                "prerequisites": "World with mode already set to EASY",
+                "steps": "Create world, set mode to EASY\nTry to change mode to EXTREME: `/chunklocked set_mode extreme`\nCheck command response\nTry to change mode to DISABLED: `/chunklocked set_mode disabled`\nCheck command response\nVerify mode is still EASY",
+                "expected": "Command fails with error message\nError: \"Cannot change mode from EASY to EXTREME. Mode can only be set once per world.\"\nExplanation: \"(This prevents players from switching modes to exploit the system)\"\nMode remains EASY\nNo data corruption",
+                "edgeCases": "Setting same mode again (EASY → EASY) should succeed (no-op)\nVerify this prevents exploit where player switches to EASY to farm credits\n---"
+            },
+            {
+                "id": "GameModeVariants-10",
+                "title": "Barrier Toggle Command - Disable",
+                "prerequisites": "World with barriers visible (locked chunks)",
+                "steps": "Create world with barriers\nNote down barrier locations (F3 + G to see chunk boundaries)\nRun `/chunklocked toggle_barriers`\nCheck command feedback\nWalk to where barriers were\nVerify barriers are gone\nCheck console logs",
+                "expected": "Command succeeds with message: \"Barriers disabled! (Removed X barriers)\"\nWarning: \"Progression still active. Use /chunklocked toggle_barriers again to restore.\"\nAll barrier blocks removed from world\nPlayer can walk through previous barrier locations\nProgression still tracks (credits, advancements)\nConsole logs: \"Barriers disabled by <player>. Removed X barriers. Progression still tracked.\"",
+                "edgeCases": "Verify removing barriers doesn't break other systems\nVerify player can still unlock chunks normally\nVerify credits still accumulate\n---"
+            },
+            {
+                "id": "GameModeVariants-11",
+                "title": "Barrier Toggle Command - Re-Enable",
+                "prerequisites": "World with barriers disabled (from Test Case 10)",
+                "steps": "Continue from previous test with barriers disabled\nRun `/chunklocked toggle_barriers` again\nCheck command feedback\nWalk to chunk boundaries\nVerify barriers are back\nTry to walk through barrier\nCheck console logs",
+                "expected": "Command succeeds: \"Barriers restored! (X chunks protected)\"\nBarriers reappear at all chunk boundaries\nPlayer cannot pass through barriers\nBarriers block player but not mobs/water/items\nConsole logs: \"Barriers re-enabled by <player>. Restored barriers for X locked chunks.\"",
+                "edgeCases": "Toggle multiple times rapidly - should work consistently\nVerify barrier count matches expected (4 sides per locked chunk adjacent to unlocked)\n---"
+            },
+            {
+                "id": "GameModeVariants-12",
+                "title": "Barrier State Persistence",
+                "prerequisites": "World with barriers disabled",
+                "steps": "Disable barriers with `/chunklocked toggle_barriers`\nVerify barriers are gone\nSave and quit to title\nReload world\nCheck if barriers are still gone or restored\nCheck console logs",
+                "expected": "Barrier state persists: barriers remain DISABLED after reload\nConsole logs: \"Barriers enabled: false\"\nPlayer can still move freely\nNo auto-restore (3.2 was deferred)",
+                "edgeCases": "Verify NBT contains barriersEnabled flag\nVerify flag defaults to true for old saves\n---"
+            },
+            {
+                "id": "GameModeVariants-13",
+                "title": "Recipe Advancement Filtering (No Credits)",
+                "prerequisites": "World with EASY mode",
+                "steps": "Create world, set EASY mode\nCraft a wooden pickaxe (triggers recipe advancement)\nCheck credits with `/chunklocked credits`\nCraft several more items (planks, sticks, etc.)\nCheck credits again",
+                "expected": "Recipe advancements do NOT grant credits\n`/chunklocked credits` count unchanged\nConsole logs show advancements but no credit rewards\nOnly actual achievements (TASK/GOAL/CHALLENGE) grant credits",
+                "edgeCases": "Verify all recipe advancements filtered (100+ recipes)\nVerify recipe unlocking still works normally (recipe book)\n---"
+            },
+            {
+                "id": "GameModeVariants-14",
+                "title": "Blacklist Honoring in All Modes",
+                "prerequisites": "World with EASY or EXTREME mode, config with blacklisted advancement",
+                "steps": "Edit config to blacklist an advancement (e.g., \"story/mine_stone\")\nRestart world\nComplete the blacklisted advancement (mine stone)\nCheck credits",
+                "expected": "Blacklisted advancement completion detected\nConsole logs advancement but no credit reward\nCredits remain unchanged\nProgression tracking unaffected",
+                "edgeCases": "Verify blacklist works for all frame types (TASK/GOAL/CHALLENGE)\nVerify blacklist works in both EASY and EXTREME modes\n---"
+            },
+            {
+                "id": "GameModeVariants-15",
+                "title": "Multiplayer Credit Synchronization",
+                "prerequisites": "Server with EASY mode, 2+ players",
+                "steps": "Player 1 joins server\nPlayer 2 joins server\nPlayer 1 completes advancement\nPlayer 1 checks credits: `/chunklocked credits`\nPlayer 2 checks Player 1's credits: `/chunklocked credits <player1>`\nPlayer 2 completes different advancement\nBoth players check credits",
+                "expected": "Each player has independent credit count\nCredits sync correctly to both clients\n`/chunklocked credits` shows own credits\n`/chunklocked credits <player>` shows other player's credits (admin)\nNo credit duplication or loss",
+                "edgeCases": "Player joins after advancements completed - credits still accurate\nPlayer disconnects during advancement - credits sync on rejoin\n---"
+            },
+            {
+                "id": "GameModeVariants-16",
+                "title": "Starter Items with Full Inventory",
+                "prerequisites": "World with mode enabled",
+                "steps": "Use creative mode or commands to fill inventory\nSet mode to EASY (if not already)\nRelog to trigger starter items\nCheck ground around player spawn\nPick up items\nUnlock chunks with credits\nUse portal mechanics\nTest penalty system\nTest barrier block collision (player blocked, mobs pass)\nTest command permissions",
+                "expected": "Starter items drop at player's feet (entity items)\nItems are visible on ground\nItems can be picked up normally\nNo items lost/deleted\nAll existing features work as before\nNo regressions introduced by mode system\nIntegration is seamless",
+                "edgeCases": "Player in midair when items drop - items fall down\nPlayer in water - items float/drop\nPlayer in lava - items may burn (expected)\n---\n## Regression Tests\n### Test Case 17: Existing Features Still Work\nMode DISABLED should completely disable mod\nMode EASY/EXTREME should enable all features\n---\n## Summary Checklist\n[ ] All 17 test cases executed\n[ ] No critical bugs found\n[ ] Performance acceptable\n[ ] Multiplayer tested\n[ ] Documentation updated with findings\n[ ] Known issues documented"
+            }
+        ]
+    },
+    {
         "id": "networksynchronization",
         "title": "Network Synchronization & Client Display",
         "tests": [

@@ -102,11 +102,12 @@ public class ChunkBarrierManager {
    * Used before global barrier reinitialization to prevent duplicate barriers.
    * 
    * @param world The server world
+   * @return The number of barriers removed
    */
-  public void clearAllBarriers(ServerLevel world) {
+  public int clearAllBarriers(ServerLevel world) {
     if (world == null) {
       LOGGER.warn("Cannot clear barriers: null world provided");
-      return;
+      return 0;
     }
 
     int totalRemoved = 0;
@@ -124,6 +125,7 @@ public class ChunkBarrierManager {
     allBarrierPositions.clear();
 
     LOGGER.info("Cleared {} barrier blocks from world", totalRemoved);
+    return totalRemoved;
   }
 
   /**
@@ -548,6 +550,7 @@ public class ChunkBarrierManager {
    */
   private Set<BlockPos> createBarrierWall(ServerLevel world, ChunkPos chunk, Direction direction) {
     Set<BlockPos> barriers = new HashSet<>();
+    int waterBlocksReplaced = 0; // Track water replacement
 
     // Calculate world coordinates for this chunk
     int chunkWorldX = chunk.x * CHUNK_SIZE;
@@ -605,6 +608,13 @@ public class ChunkBarrierManager {
         // Place barriers in air, fluids, leaves, vines, and any passable blocks
         // (skip only solid terrain that blocks player movement)
         BlockState existingState = world.getBlockState(pos);
+
+        // Debug logging for fluid blocks
+        if (!existingState.getFluidState().isEmpty()) {
+          LOGGER.info("Found fluid at {}: block={}, fluidState={}", pos, existingState.getBlock(),
+              existingState.getFluidState());
+        }
+
         boolean isReplaceable = existingState.isAir()
             || !existingState.getFluidState().isEmpty()
             || existingState.is(net.minecraft.tags.BlockTags.LEAVES)
@@ -612,14 +622,27 @@ public class ChunkBarrierManager {
             || !existingState.canOcclude(); // passable blocks (grass, flowers, crops, etc.)
 
         if (isReplaceable) {
-          // Use flags that prevent neighbor updates (prevents lava/water from flowing
-          // back)
-          // 2 = UPDATE_CLIENTS, 16 = BLOCK_UPDATE (without UPDATE_NEIGHBORS)
-          world.setBlock(pos, Chunklocked.BARRIER_BLOCK_V2.defaultBlockState(), 2 | 16);
+          // Track water replacement for logging
+          if (!existingState.getFluidState().isEmpty()) {
+            waterBlocksReplaced++;
+            LOGGER.info("Replacing fluid at {} with barrier", pos);
+          }
+
+          // Use flag 2 | 1 (UPDATE_CLIENTS | NOTIFY_NEIGHBORS)
+          // Flag 2 = update clients
+          // Flag 1 = notify neighbors - important for fluids to know there's a solid
+          // block here
+          // This allows adjacent fluids to update their flow state
+          world.setBlock(pos, Chunklocked.BARRIER_BLOCK_V2.defaultBlockState(), 2 | 1);
           barriers.add(pos);
         }
         // If there's solid terrain, it acts as a natural barrier - skip it
       }
+    }
+
+    if (waterBlocksReplaced > 0) {
+      LOGGER.info("Created barrier wall for chunk [{}, {}] {} side: {} total barriers, {} water blocks replaced",
+          chunk.x, chunk.z, direction, barriers.size(), waterBlocksReplaced);
     }
 
     return barriers;

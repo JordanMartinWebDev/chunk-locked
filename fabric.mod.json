@@ -25,6 +25,20 @@
 			"chunklocked.ChunklockedDataGenerator"
 		]
 	},
+	"custom": {
+		"fabric-resource-loader": {
+			"server_data": {
+				"chunk-locked": [
+					""
+				]
+			},
+			"client_data": {
+				"chunk-locked": [
+					""
+				]
+			}
+		}
+	},
 	"mixins": [
 		"chunk-locked.mixins.json",
 		{

@@ -113,10 +113,15 @@ public class BatchBarrierOperations {
     // Place all blocks in the batch
     for (BlockPos pos : batch.positions) {
       BlockState existingState = world.getBlockState(pos);
-      if (existingState.isAir() || existingState.canBeReplaced()) {
-        // Use flags that prevent neighbor updates (prevents lava/water from flowing
-        // back)
-        world.setBlock(pos, Chunklocked.BARRIER_BLOCK_V2.defaultBlockState(), 2 | 16);
+      // Replace air, fluids (water/lava), and other replaceable blocks
+      boolean isReplaceable = existingState.isAir()
+          || !existingState.getFluidState().isEmpty()
+          || existingState.canBeReplaced();
+
+      if (isReplaceable) {
+        // Use flags that prevent neighbor updates and fluid flow-back
+        // Flag 2 = update clients, Flag 16 = skip neighbor reactions
+        world.setBlock(pos, Chunklocked.BARRIER_BLOCK_V2.defaultBlockState(), 2 | 1);
       }
     }
 

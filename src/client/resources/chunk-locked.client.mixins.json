@@ -3,7 +3,8 @@
 	"package": "chunklocked.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"ExampleClientMixin"
+		"ExampleClientMixin",
+		"WorldPresetsMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

@@ -30,11 +30,38 @@ public class ChunkUnlockData {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("chunk-locked");
     private static final String FILE_NAME = "chunklocked_data.nbt";
-    private static final int DATA_VERSION = 3; // Updated to v3 for global chunk storage
+    private static final int DATA_VERSION = 5; // Updated to v5 for starter items tracking
 
     private final AdvancementCreditManager creditManager;
     private final Path dataFile;
     private boolean isDirty = false;
+
+    /**
+     * The difficulty mode for this world (DISABLED, EASY, or EXTREME).
+     * Default is DISABLED (mod inactive).
+     */
+    private ChunklockedMode mode = ChunklockedMode.DISABLED;
+
+    /**
+     * Flag to ensure mode is set only once (at world creation).
+     * Once true, attempting to change the mode will throw an exception.
+     */
+    private boolean modeSetAtCreation = false;
+
+    /**
+     * Tracks which players have received starter items.
+     * Maps player UUID to whether they've received the items.
+     * Only applies to EASY and EXTREME modes.
+     */
+    private final Set<UUID> playersWithStarterItems = new HashSet<>();
+
+    /**
+     * Controls whether barriers are enabled or disabled.
+     * When false, barriers are removed from the world.
+     * This is an emergency escape hatch for players stuck by barrier bugs.
+     * Default is true (barriers enabled).
+     */
+    private boolean barriersEnabled = true;
 
     /**
      * Stores globally unlocked chunks (shared across all players).
@@ -89,10 +116,26 @@ public class ChunkUnlockData {
             // Check data version
             int version = nbt.getInt("DataVersion").orElse(0);
             if (version == 1) {
-                LOGGER.info("Detected legacy chunk unlock data (v1). Will migrate to v2 on next save.");
+                LOGGER.info("Detected legacy chunk unlock data (v1). Will migrate to v4 on next save.");
             } else if (version != DATA_VERSION && version != 0) {
                 LOGGER.warn("Loading chunk unlock data with version {} (expected {}). Migration may be needed.",
                         version, DATA_VERSION);
+            }
+
+            // Load mode (v4 feature, defaults to DISABLED for older saves)
+            if (nbt.contains("Mode")) {
+                String modeString = nbt.getString("Mode").orElse("DISABLED");
+                try {
+                    this.mode = ChunklockedMode.valueOf(modeString);
+                    this.modeSetAtCreation = true; // Mark as set to prevent changes
+                    LOGGER.info("Loaded ChunklockedMode: {}", this.mode);
+                } catch (IllegalArgumentException e) {
+                    LOGGER.warn("Invalid mode '{}' in save data, defaulting to DISABLED", modeString);
+                    this.mode = ChunklockedMode.DISABLED;
+                }
+            } else {
+                LOGGER.info("No mode found in save data (pre-v4), defaulting to DISABLED");
+                this.mode = ChunklockedMode.DISABLED;
             }
 
             // Load player data
@@ -175,6 +218,31 @@ public class ChunkUnlockData {
                 }
             }
 
+            // Load starter items tracking (v5 feature)
+            if (nbt.contains("StarterItemsGiven")) {
+                ListTag starterItemsList = nbt.getList("StarterItemsGiven").orElse(new ListTag());
+                for (int i = 0; i < starterItemsList.size(); i++) {
+                    String uuidString = starterItemsList.getString(i).orElse("");
+                    if (!uuidString.isEmpty()) {
+                        try {
+                            playersWithStarterItems.add(UUID.fromString(uuidString));
+                        } catch (IllegalArgumentException e) {
+                            LOGGER.warn("Invalid UUID in starter items list: {}", uuidString);
+                        }
+                    }
+                }
+                LOGGER.info("Loaded {} players with starter items", playersWithStarterItems.size());
+            }
+
+            // Load barriers enabled flag (v5 feature, defaults to true for compatibility)
+            if (nbt.contains("BarriersEnabled")) {
+                barriersEnabled = nbt.getBoolean("BarriersEnabled").orElse(true);
+                LOGGER.info("Barriers enabled: {}", barriersEnabled);
+            } else {
+                barriersEnabled = true; // Default to enabled for older saves
+                LOGGER.debug("No barriers flag in save data, defaulting to enabled");
+            }
+
             LOGGER.info("Loaded chunk unlock data for {} players with {} global unlocked chunks",
                     creditManager.getPlayerCount(), globalUnlockedChunks.size());
 
@@ -192,6 +260,9 @@ public class ChunkUnlockData {
 
             // Write data version
             nbt.putInt("DataVersion", DATA_VERSION);
+
+            // Write mode (v4 feature)
+            nbt.putString("Mode", mode.name());
 
             // Write player data (credits and advancements)
             CompoundTag playersNbt = new CompoundTag();
@@ -227,6 +298,16 @@ public class ChunkUnlockData {
                 chunksList.add(chunkNbt);
             }
             nbt.put("GlobalUnlockedChunks", chunksList);
+
+            // Write starter items tracking (v5 feature)
+            ListTag starterItemsList = new ListTag();
+            for (UUID playerId : playersWithStarterItems) {
+                starterItemsList.add(StringTag.valueOf(playerId.toString()));
+            }
+            nbt.put("StarterItemsGiven", starterItemsList);
+
+            // Write barriers enabled flag (v5 feature)
+            nbt.putBoolean("BarriersEnabled", barriersEnabled);
 
             // Create parent directory if needed
             java.nio.file.Files.createDirectories(dataFile.getParent());
@@ -330,6 +411,123 @@ public class ChunkUnlockData {
         if (!globalUnlockedChunks.isEmpty()) {
             globalUnlockedChunks.clear();
             markDirty();
+        }
+    }
+
+    // ========== MODE MANAGEMENT ==========
+
+    /**
+     * Gets the current difficulty mode for this world.
+     *
+     * @return The ChunklockedMode (DISABLED, EASY, or EXTREME)
+     */
+    public ChunklockedMode getMode() {
+        return mode;
+    }
+
+    /**
+     * Sets the difficulty mode for this world.
+     * <p>
+     * <b>IMPORTANT</b>: This can only be called ONCE, typically at world creation.
+     * Subsequent calls will throw an IllegalStateException to prevent gameplay
+     * exploits.
+     * <p>
+     * The mode determines:
+     * <ul>
+     * <li>Whether the mod is active (EASY/EXTREME) or disabled (DISABLED)</li>
+     * <li>How many credits are awarded for advancements</li>
+     * <li>Whether starter items are given</li>
+     * </ul>
+     *
+     * @param mode The mode to set
+     * @throws IllegalStateException    if the mode has already been set
+     * @throws IllegalArgumentException if mode is null
+     */
+    public void setMode(ChunklockedMode mode) {
+        if (mode == null) {
+            throw new IllegalArgumentException("ChunklockedMode cannot be null");
+        }
+
+        if (modeSetAtCreation) {
+            throw new IllegalStateException(
+                    "Cannot change ChunklockedMode after world creation. Current mode: " + this.mode);
+        }
+
+        this.mode = mode;
+        this.modeSetAtCreation = true;
+        markDirty();
+        LOGGER.info("ChunklockedMode set to {} (immutable)", mode);
+    }
+
+    /**
+     * Checks if the mode has been set and is immutable.
+     *
+     * @return true if the mode has been set and cannot be changed
+     */
+    public boolean isModeImmutable() {
+        return modeSetAtCreation;
+    }
+
+    // ========== STARTER ITEMS MANAGEMENT ==========
+
+    /**
+     * Checks if a player has already received starter items.
+     *
+     * @param playerId The player's UUID
+     * @return true if the player has received starter items, false otherwise
+     */
+    public boolean hasReceivedStarterItems(UUID playerId) {
+        return playersWithStarterItems.contains(playerId);
+    }
+
+    /**
+     * Marks a player as having received starter items.
+     * <p>
+     * This prevents the player from receiving starter items again.
+     *
+     * @param playerId The player's UUID
+     */
+    public void markStarterItemsGiven(UUID playerId) {
+        if (playersWithStarterItems.add(playerId)) {
+            markDirty();
+            LOGGER.debug("Marked player {} as having received starter items", playerId);
+        }
+    }
+
+    /**
+     * Gets the count of players who have received starter items.
+     *
+     * @return The number of players with starter items
+     */
+    public int getStarterItemsGivenCount() {
+        return playersWithStarterItems.size();
+    }
+
+    // ========== BARRIER MANAGEMENT ==========
+
+    /**
+     * Checks if barriers are currently enabled.
+     *
+     * @return true if barriers are enabled (default), false if disabled
+     */
+    public boolean areBarriersEnabled() {
+        return barriersEnabled;
+    }
+
+    /**
+     * Sets whether barriers are enabled.
+     * <p>
+     * This is an emergency toggle for when players get stuck due to barrier bugs.
+     * When disabled, barriers are removed from the world but progression still
+     * works.
+     *
+     * @param enabled true to enable barriers, false to disable
+     */
+    public void setBarriersEnabled(boolean enabled) {
+        if (this.barriersEnabled != enabled) {
+            this.barriersEnabled = enabled;
+            markDirty();
+            LOGGER.info("Barriers {}", enabled ? "enabled" : "disabled");
         }
     }
 }

@@ -11,6 +11,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -177,5 +180,37 @@ public class BarrierBlockV2 extends Block {
   @Override
   public boolean canBeReplaced(BlockState state, BlockPlaceContext context) {
     return false;
+  }
+
+  /**
+   * Override getShape to return a full block shape.
+   * This tells fluids that this is a solid block that blocks their flow.
+   * 
+   * While getCollisionShape() returns empty for non-players (allowing mobs/items
+   * to pass through), fluids check getShape() to determine if they can flow.
+   * Returning a full cube here prevents fluid from entering this space.
+   * 
+   * @param state   The block state
+   * @param level   The world
+   * @param pos     The block position
+   * @param context The context
+   * @return Full cube shape to block fluids
+   */
+  @Override
+  public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    return Shapes.block();
+  }
+
+  /**
+   * Get the fluid state of this block.
+   * Always return empty - this block cannot contain fluids.
+   * This prevents waterlogging and fluid interaction.
+   * 
+   * @param state The block state
+   * @return Empty fluid state
+   */
+  @Override
+  public FluidState getFluidState(BlockState state) {
+    return net.minecraft.world.level.material.Fluids.EMPTY.defaultFluidState();
   }
 }

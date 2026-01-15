@@ -7,5 +7,8 @@
   "chunklocked.command.credits.available": "§eAvailable Credits: §6%s",
   "chunklocked.command.credits.total_advancements": "§eTotalAdvancements Completed: §7%s",
   "chunklocked.command.info.title": "§6=== Chunk Credits for %s ===",
-  "chunklocked.command.info.player_not_found": "§cPlayer not found: %s"
+  "chunklocked.command.info.player_not_found": "§cPlayer not found: %s",
+  "generator.chunk-locked.easy": "Chunklocked: Easy",
+  "generator.chunk-locked.extreme": "Chunklocked: Extreme"
 }
+
