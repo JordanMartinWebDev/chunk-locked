@@ -1,7 +1,7 @@
 # Chunk Locked
 
 <div align="center">
-  <img src="assets/chunk-locked/icon.png" alt="Chunk Locked Icon" width="200"/>
+  <img src="assets/chunk-locked/icon.png" alt="Chunk Locked Icon" width="600"/>
   
   **A Minecraft Fabric mod that transforms gameplay into a progression-based chunk unlocking experience. Start small, expand strategically.**
 </div>
